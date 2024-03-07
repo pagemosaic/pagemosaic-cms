@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "es2022",
+      "dom"
+    ],
+    "rootDir": "./src",
+    "outDir": "./dist",  // Output directory for compiled files
+    "module": "CommonJS",  // Specify module code generation
+    "target": "ES2022",  // Specify ECMAScript target version
+    "esModuleInterop": true,  // Enables compatibility with default imports
+    "strict": true,  // Enable all strict type-checking options
+    "baseUrl": "./src"
+  },
+  "files": [
+    "./src/stack/index.ts"
+  ],
+  "include": ["./src/**/*"],
+  "exclude": [
+    "node_modules",
+    "cdk.out"
+  ]
+}

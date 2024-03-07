@@ -1,0 +1,32 @@
+{
+  "name": "infra",
+  "version": "1.0.0",
+  "scripts": {
+    "backup": "ts-node ./src/exec/backup.ts",
+    "bootstrap": "ts-node ./src/exec/bootstrap.ts",
+    "deploy": "ts-node ./src/exec/deploy.ts",
+    "destroy": "ts-node ./src/exec/destroy.ts",
+    "create-admin-user": "local-run ts-node ./src/exec/create-admin-user.ts"
+  },
+  "dependencies": {
+    "lodash": "4.17.21"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-acm": "3.485.0",
+    "@aws-sdk/client-cloudfront": "3.485.0",
+    "@aws-sdk/client-ssm": "3.485.0",
+    "@aws-sdk/client-dynamodb": "3.485.0",
+    "@aws-sdk/client-cognito-identity-provider": "3.485.0",
+    "@aws-sdk/client-s3": "3.485.0",
+    "@aws-sdk/s3-request-presigner": "3.485.0",
+    "@types/lodash": "4.14.202",
+    "@types/node": "20.8.10",
+    "@types/fs-extra": "11.0.4",
+    "aws-cdk-lib": "2.118.0",
+    "constructs": "10.3.0",
+    "jszip": "3.10.1",
+    "fs-extra": "11.2.0",
+    "typescript": "^5.2.2",
+    "ts-node": "10.9.2"
+  }
+}

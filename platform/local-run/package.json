@@ -1,0 +1,17 @@
+{
+	"name": "local-run",
+	"version": "0.1.0",
+	"private": true,
+	"bin": {
+		"local-run": "./bin.js"
+	},
+	"files": [
+		"bin.js"
+	],
+	"devDependencies": {
+		"dotenv": "16.3.1"
+	},
+	"engines": {
+		"node": "18.x"
+	}
+}

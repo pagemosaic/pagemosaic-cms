@@ -1,0 +1,25 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"pipeline": {
+		"bootstrap": {},
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": ["dist/**", "build/**", "static/**"],
+			"outputMode": "errors-only",
+			"cache": false
+		},
+		"deploy": {
+			"outputMode": "errors-only"
+		},
+		"destroy": {
+			"outputMode": "errors-only"
+		},
+		"backup": {},
+		"preview": {},
+		"start": {},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		}
+	}
+}

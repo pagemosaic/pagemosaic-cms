@@ -1,0 +1,86 @@
+import { Router } from 'express';
+
+import auth from './post-sys-user-auth';
+import authRefresh from './post-sys-user-auth-refresh';
+import authResetConfirm from './post-sys-user-auth-reset-confirm';
+import authResetStart from './post-sys-user-auth-reset-start';
+import authSignUpConfirm from './post-sys-user-auth-signup-confirm';
+
+import getSysUserProfile from './get-sys-user-profile';
+import postSysUserProfile from './post-sys-user-profile';
+import postPage from './post-page';
+import getPreview from './get-preview';
+import getWebsiteUrl from './get-website-url';
+import postCustomDomainCertificate from './post-custom-domain-certificate';
+import postCustomDomainDistribution from './post-custom-domain-distribution';
+import getWebsiteSslCertificateDetails from './get-website-ssl-certificate-details';
+import deleteCustomDomain from './delete-custom-domain';
+import getPages from './get-pages';
+import getTemplates from './get-templates';
+import getPage from './get-page';
+import getPublicFiles from './get-public-files';
+import postAddPublicFile from './post-add-public-file';
+import postAddSystemFile from './post-add-system-file';
+import postDeletePublicFiles from './post-delete-public-files';
+import postInvalidatePaths from './post-invalidate-paths';
+import postCopyPage from './post-copy-page';
+import postDeletePage from './post-delete-page';
+import getSite from './get-site';
+import postSite from './post-site';
+import postTemplate from './post-template';
+import getTemplate from './get-template';
+import getFullPages from './get-full-pages';
+import getGenerator from './get-generator';
+import postCreatePage from './post-create-page';
+import postGenerationStart from './post-generation-start';
+import postGenerationEnd from './post-generation-end';
+import postRestoreRecords from './post-restore-records';
+import postDeleteRecords from './post-delete-records';
+import getTemplatesWebsitesGalleryIndex from './get-templates-websites-gallery-index';
+import postTemplateTitle from './post-template-title';
+import getFullPage from './get-full-page';
+
+const router = Router();
+
+router.use(auth);
+router.use(authRefresh);
+router.use(authResetConfirm);
+router.use(authResetStart);
+router.use(authSignUpConfirm);
+
+router.use(getSysUserProfile);
+router.use(postSysUserProfile);
+router.use(postPage);
+router.use(getPreview);
+router.use(getWebsiteUrl);
+router.use(postCustomDomainCertificate);
+router.use(postCustomDomainDistribution);
+router.use(getWebsiteSslCertificateDetails);
+router.use(deleteCustomDomain);
+
+router.use(getPages);
+router.use(getTemplates);
+router.use(getPage);
+router.use(getPublicFiles);
+router.use(postAddPublicFile);
+router.use(postAddSystemFile);
+router.use(postDeletePublicFiles);
+router.use(postInvalidatePaths);
+router.use(postCopyPage);
+router.use(postDeletePage);
+router.use(getSite);
+router.use(postSite);
+router.use(postTemplate);
+router.use(getTemplate);
+router.use(getFullPages);
+router.use(getGenerator);
+router.use(postCreatePage);
+router.use(postGenerationStart);
+router.use(postGenerationEnd);
+router.use(postRestoreRecords);
+router.use(postDeleteRecords);
+router.use(getTemplatesWebsitesGalleryIndex);
+router.use(postTemplateTitle);
+router.use(getFullPage);
+
+export default router;
