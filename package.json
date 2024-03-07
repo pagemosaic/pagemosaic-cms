@@ -1,7 +1,6 @@
 {
-  "name": "pagemosaic-web-platform",
+  "name": "pagemosaic-cms",
   "version": "0.0.1",
-  "description": "A comprehensive, open-source web platform designed to offer a suite of powerful features.",
   "repository": {
     "type": "git",
     "url": "git@github.com:pagemosaic/pagemosaic-web-platform.git",
