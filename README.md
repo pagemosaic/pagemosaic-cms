@@ -72,7 +72,7 @@ This will open a form to validate the administrator's email. Enter the default p
 DefaultPassword1!
 ```
 
-## Undeploy website instance
+## Undeploy CMS instance
 
 To remove resources created on AWS during deployment, run the command:
 ```shell
