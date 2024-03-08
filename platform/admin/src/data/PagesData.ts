@@ -107,7 +107,7 @@ class PagesDataSingleton {
                 newTemplateId = nanoid();
             }
             await post<any>('/api/admin/post-create-page', {templateId, newPageId, newTemplateId, newTemplateTitle, pageRoute}, accessToken);
-            await this.invalidatePageData(newPageId, templateId);
+            await this.invalidatePageData(newPageId, newTemplateId || templateId);
             generatorDataSingleton.invalidateData();
             return newPageId;
         }
@@ -221,11 +221,14 @@ class PagesDataSingleton {
                         const {pageEntries = [], templateEntries = []} = this.dataInstance;
                         const foundPageEntryIndex = pageEntries.findIndex(i => i.Entry?.PK.S === pageEntry.Entry?.PK.S);
                         const foundTemplateEntryIndex = templateEntries.findIndex((i => i.Entry?.PK.S === templateEntry.Entry?.PK.S));
-                        if (foundPageEntryIndex >= 0 && foundTemplateEntryIndex >= 0) {
+                        if (foundPageEntryIndex >= 0) {
                             pageEntries.splice(foundPageEntryIndex, 1, pageEntry);
-                            templateEntries.splice(foundTemplateEntryIndex, 1, templateEntry);
                         } else {
                             pageEntries.push(pageEntry);
+                        }
+                        if (foundTemplateEntryIndex >= 0) {
+                            templateEntries.splice(foundTemplateEntryIndex, 1, templateEntry);
+                        } else {
                             templateEntries.push(templateEntry);
                         }
                         let pagesRoots: Array<PagesNode> = [];
@@ -240,7 +243,7 @@ class PagesDataSingleton {
                             }
                             return 0;
                         });
-                        pagesRoots = listToTree(sortedPageEntries, this.dataInstance.templateEntries);
+                        pagesRoots = listToTree(sortedPageEntries, templateEntries);
                         if (pagesRoots && pagesRoots.length > 0) {
                             for (const pagesRoot of pagesRoots) {
                                 setParentReferences(pagesRoot);

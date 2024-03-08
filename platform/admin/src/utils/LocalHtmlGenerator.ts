@@ -121,13 +121,13 @@ class LocalHtmlGenerator {
                         isDevMode: 'true',
                         site
                     })
-                    : undefined;
+                    : '';
                 const renderedSiteBodyScripts = siteBodyScripts
                     ? await LiquidEngine.parseAndRender(siteBodyScripts, {
                         isDevMode: 'true',
                         site
                     })
-                    : undefined;
+                    : '';
                 const stylesTag = renderedSiteStyles
                     ? `<style>${renderedSiteStyles}</style>\n<style>${renderedPageStyles}</style>`
                     : `<style>${renderedPageStyles}</style>`;
