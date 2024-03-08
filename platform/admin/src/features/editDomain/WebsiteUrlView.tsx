@@ -45,7 +45,7 @@ function StatusBadge({status}: { status: SslCertificateStatus;}) {
     } else if (status === 'PENDING_VALIDATION' || status === 'INACTIVE') {
         return (<Badge variant="default" className="whitespace-nowrap">{sslCertificateStatusLabels[status]}</Badge>);
     } else {
-        return (<Badge variant="default" className="whitespace-nowrap bg-amber-600 text-white">{sslCertificateStatusLabels[status]}</Badge>);
+        return (<Badge variant="default" className="whitespace-nowrap bg-amber-600 text-white">{sslCertificateStatusLabels['UNKNOWN']}</Badge>);
     }
 }
 
