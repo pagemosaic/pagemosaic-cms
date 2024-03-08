@@ -16,7 +16,7 @@ Designed for convenience, the project's architecture enables the deployment of a
 Before deploying the project, you must create an administrative user on your AWS account and configure the AWS CLI on your computer, as shown in the video below.
    <p align="center">
       <a href="https://youtu.be/5_UlOTywdOA" target="_blank">
-   <img src="https://github.com/pagemosaic/.github/blob/e78b5f8dc9587d939d19de70446be7124bef94a5/images/og/youtube_video_cover_image-min.png" alt="Video 1" width="45%"/>
+   <img src="https://github.com/pagemosaic/.github/blob/main/images/og/youtube_video_cover_image-min.png" alt="Video 1" width="45%"/>
       </a>
    </p>
 
