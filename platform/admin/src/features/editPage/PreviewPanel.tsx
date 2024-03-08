@@ -44,7 +44,6 @@ export function PreviewPanel(props: PreviewPanelProps) {
             } else {
                 (async () => {
                     const {html} = await pageDataSingleton.getPreviewHtml({pageEntry, templateEntry}, {siteEntry});
-                    console.log('HTML: ', html);
                     if (iFrameRef.current) {
                         iFrameRef.current.loadSrcDoc(html);
                     }
