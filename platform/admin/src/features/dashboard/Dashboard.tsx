@@ -85,7 +85,7 @@ export function Dashboard(props: DashboardProps) {
                                         {!platformWebsiteUrl?.domain
                                             ? <ButtonLink Icon={LucideGlobe} to="/edit-domain" label="Add Custom Domain" size="sm"
                                                             variant="default"/>
-                                            : <ButtonLink size="sm" to={`https://${platformWebsiteUrl?.domain}`} target="_blank"
+                                            : <ButtonLink size="sm" to={`https://${platformWebsiteUrl?.entryPointDomainAlias || platformWebsiteUrl?.domain}`} target="_blank"
                                                           Icon={LucideExternalLink} label="Open in New Tab"/>
                                         }
                                     </div>
