@@ -26,7 +26,7 @@ const loopThroughTheBlocksTemplate = template(`{% for siteBlock in site.blocks %
 
 const getBlockOutsideTheLoopTemplate = (blockKey: string) => `{% assign ${blockKey} = site.blocks | where: 'key', '${blockKey}' | first %}`;
 const getBlockLoopTemplate = (blockKey: string) => {
-    let result = `{% assign ${blockKey}List = thisPage.blocks | where: 'key', '${blockKey}' %}\n`;
+    let result = `{% assign ${blockKey}List = site.blocks | where: 'key', '${blockKey}' %}\n`;
     result += `{% for ${blockKey} in ${blockKey}List %}\n`;
     result += `\t<!-- get the block fields -->\n`;
     result += '{% endfor %}';
