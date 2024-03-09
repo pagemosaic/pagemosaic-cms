@@ -75,7 +75,7 @@ export function Dashboard(props: DashboardProps) {
                                                     <p className="pb-2">Your website has a custom domain address.</p>
                                                     <p>
                                                         <a className="text-blue-600 hover:underline font-normal"
-                                                          href={`https://${platformWebsiteUrl?.domain}`} target="_blank">{`https://${platformWebsiteUrl?.domain}`}</a>
+                                                          href={`https://${platformWebsiteUrl?.entryPointDomainAlias || platformWebsiteUrl?.domain}`} target="_blank">{`https://${platformWebsiteUrl?.entryPointDomainAlias || platformWebsiteUrl?.domain}`}</a>
                                                     </p>
                                                 </>
                                             )
