@@ -320,7 +320,12 @@ class PageDataSingleton {
                             excludeFromSitemap: Meta.ExcludeFromSitemap?.S === 'true',
                             updated: formatDate(Number(Entry?.EntryUpdateDate.N))
                         };
-                        const domain = platformWebsiteUrl?.domain ? platformWebsiteUrl?.domain : platformWebsiteUrl?.entryPointDomain || '';
+                        let domain = '';
+                        if (platformWebsiteUrl) {
+                            const {domain: mainDomain, entryPointDomain, entryPointDomainAlias} = platformWebsiteUrl;
+                            domain = entryPointDomainAlias || mainDomain || entryPointDomain;
+                        }
+                        console.log('Domain: ', domain);
                         const site: SiteContext = {
                             domain,
                             pages: linkedPages,

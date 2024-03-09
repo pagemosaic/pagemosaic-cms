@@ -86,7 +86,7 @@ export function listToTree(pagesEntries: Array<DI_PageEntry>, templateEntries: A
                                     updated: Number(Entry.EntryUpdateDate.N || 0),
                                     created: Number(Entry.EntryCreateDate.N || 0),
                                     templateId: foundNodeTemplate.templateId,
-                                    isMainPage: Meta.PageSlug.S === 'index'
+                                    isMainPage: Meta.PageSlug.S === 'index' && Meta.PageRoute.S === DI_PAGE_ROUTE_ROOT
                                 });
                             }
                         }

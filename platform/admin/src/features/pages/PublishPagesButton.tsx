@@ -47,12 +47,17 @@ export function PublishPagesButton(props: PublishPagesButtonProps) {
     const handlePublishPages = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        let websiteDomain = '';
+        if (platformWebsiteUrl) {
+            const {domain: mainDomain, entryPointDomain, entryPointDomainAlias} = platformWebsiteUrl;
+            websiteDomain = entryPointDomainAlias || mainDomain || entryPointDomain;
+        }
         showDialog({
             title: 'Publish Website',
             // description: 'The pages you have changed recently will be published',
             action: 'publishPages',
             formDataParams: {
-                websiteDomain: platformWebsiteUrl?.domain ? platformWebsiteUrl.domain : platformWebsiteUrl?.entryPointDomain || '',
+                websiteDomain,
             },
             Icon: LucideGlobe,
             buttonLabel: 'Publish',
