@@ -5,6 +5,7 @@ import {LucideUpload} from 'lucide-react';
 import {useFetcher, useRevalidator} from 'react-router-dom';
 import {useAsyncStatus} from '@/components/utils/AsyncStatusProvider';
 import {publicBucketDataSingleton} from '@/data/PublicBucketData';
+import {validateFileName} from '@/utils/FormatUtils';
 
 interface UploadButtonProps {
     node: TreeNode;
@@ -17,27 +18,34 @@ export function UploadButton(props: UploadButtonProps) {
     const {status, setStatus} = useAsyncStatus();
 
     const handleUploadChange = (e: any) => {
-        const files = e.target.files;
+        const files: Array<File> = e.target.files;
         if (!files.length) {
             return;
         }
-        publicBucketDataSingleton.uploadPublicFiles(
-            files,
-            (complete: number, total: number, cancel) => {
-                setStatus({
-                    isLoading: true,
-                    loadingProgress: complete,
-                    loadingTotal: total,
-                    cancel
-                });
-            },
-            node.path
-        ).then(() => {
-            setStatus({isSuccess: true});
-            revalidator.revalidate();
-        }).catch((e: any) => {
+        try{
+            for (const file of files) {
+                validateFileName(file.name);
+            }
+            publicBucketDataSingleton.uploadPublicFiles(
+                files,
+                (complete: number, total: number, cancel) => {
+                    setStatus({
+                        isLoading: true,
+                        loadingProgress: complete,
+                        loadingTotal: total,
+                        cancel
+                    });
+                },
+                node.path
+            ).then(() => {
+                setStatus({isSuccess: true});
+                revalidator.revalidate();
+            }).catch((e: any) => {
+                setStatus({isError: true, error: e.message});
+            });
+        } catch (e: any){
             setStatus({isError: true, error: e.message});
-        });
+        }
     };
 
     const handleUploadClick = () => {

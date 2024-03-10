@@ -4,6 +4,7 @@ import { TreeNode } from "infra-common/system/Bucket";
 import {ButtonAction} from '@/components/utils/ButtonAction';
 import {useAsyncStatus} from '@/components/utils/AsyncStatusProvider';
 import {publicBucketDataSingleton} from '@/data/PublicBucketData';
+import {validateFileName} from '@/utils/FormatUtils';
 
 interface PublicFilesUploadButtonProps {
     node: TreeNode;
@@ -16,28 +17,35 @@ export function PublicFilesUploadButton(props: PublicFilesUploadButtonProps) {
     const {status, setStatus} = useAsyncStatus();
 
     const handleUploadChange = (e: any) => {
-        const files = e.target.files;
+        const files: Array<File> = e.target.files;
         if (!files.length) {
             return;
         }
-        publicBucketDataSingleton.uploadPublicFiles(
-            files,
-            (complete: number, total: number, cancel) => {
-                setStatus({
-                    isLoading: true,
-                    loadingProgress: complete,
-                    loadingTotal: total,
-                    cancel
-                });
-            },
-            node.path
-        ).then(() => {
-            setStatus({isSuccess: true});
-        }).catch((e: any) => {
+        try {
+            for (const file of files) {
+                validateFileName(file.name);
+            }
+            publicBucketDataSingleton.uploadPublicFiles(
+                files,
+                (complete: number, total: number, cancel) => {
+                    setStatus({
+                        isLoading: true,
+                        loadingProgress: complete,
+                        loadingTotal: total,
+                        cancel
+                    });
+                },
+                node.path
+            ).then(() => {
+                setStatus({isSuccess: true});
+            }).catch((e: any) => {
+                setStatus({isError: true, error: e.message});
+            }).finally(() => {
+                onUpload();
+            });
+        } catch (e: any) {
             setStatus({isError: true, error: e.message});
-        }).finally(() => {
-            onUpload();
-        });
+        }
     };
 
     const handleUploadClick = () => {

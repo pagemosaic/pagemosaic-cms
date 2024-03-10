@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {LucidePencilRuler, LucideCheck} from 'lucide-react';
 import debounce from 'lodash-es/debounce';
 import imagePlaceholder from '@/assets/image-placeholder.svg';
@@ -21,9 +21,15 @@ export function ExternalImagePreview(props: ExternalImagePreviewProps) {
     const imageElementRef = useRef<HTMLImageElement>(null);
     const [imageParams, setImageParams] = useState<ImageParams>({width: 0, height: 0});
 
+    useEffect(() => {
+        if (imageElementRef.current) {
+            imageElementRef.current.src = imageUrl || imagePlaceholder;
+        }
+    }, [imageUrl]);
+
     const debouncedUrlChange = debounce((value: string) => {
         if (imageElementRef.current) {
-            imageElementRef.current.src = value;
+            imageElementRef.current.src = value || imagePlaceholder;
         }
     }, 800);
 
@@ -54,7 +60,7 @@ export function ExternalImagePreview(props: ExternalImagePreviewProps) {
                     className="w-[250px] h-[250px] rounded-md border-[1px] border-slate-200 flex-grow-0 overflow-hidden">
                     <img
                         ref={imageElementRef}
-                        src={imageElementRef.current?.src}
+                        // src={imageElementRef.current?.src}
                         alt={'Unknown'}
                         className="h-auto w-auto object-cover object-center aspect-square"
                         onLoad={handleImageLoadingSuccess}

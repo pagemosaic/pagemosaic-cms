@@ -4,9 +4,13 @@ import {FORM_ACTION_RESET} from '@/utils/FormUtils';
 import {publicBucketDataSingleton} from '@/data/PublicBucketData';
 
 const addFolderSchema = z.object({
-    directoryName: z.string().min(1, {
-        message: 'The folder name should be not empty'
-    }),
+    directoryName: z.string()
+        .regex(/^[a-zA-Z0-9_-]+$/, {
+            message: "The folder name must consist only of letters, numbers, underscores, or hyphens"
+        })
+        .min(1, {
+            message: 'The folder name should be not empty'
+        }),
     currentPath: z.string().min(1, {
         message: 'The current path is missing'
     }),

@@ -76,3 +76,11 @@ export function getRepositoryName(repositoryUrl: string): string {
     }
     return repositoryUrl.substring(lastIndex + 1);
 }
+
+const validFileNamePattern = /^[a-zA-Z0-9_.-]+$/;
+export function validateFileName(fileName: string): void {
+    // Define a regex pattern for valid characters in a file name for URL usage
+    if (!validFileNamePattern.test(removeFileExtension(fileName))) {
+        throw Error('The name of the file should consist only of letters, numbers, dots, underscores, or hyphens');
+    }
+}

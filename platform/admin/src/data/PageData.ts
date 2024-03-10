@@ -325,7 +325,6 @@ class PageDataSingleton {
                             const {domain: mainDomain, entryPointDomain, entryPointDomainAlias} = platformWebsiteUrl;
                             domain = entryPointDomainAlias || mainDomain || entryPointDomain;
                         }
-                        console.log('Domain: ', domain);
                         const site: SiteContext = {
                             domain,
                             pages: linkedPages,

@@ -6,9 +6,13 @@ const dataSchema = z.object({
     PageTitle: z.string().min(2, {
         message: "The page title must be at least 2 characters.",
     }),
-    PageSlug: z.string().min(2, {
-        message: "The page slug must be at least 2 characters.",
-    })
+    PageSlug: z.string()
+        .regex(/^[a-zA-Z0-9_-]+$/, {
+            message: "The page slug must consist only of letters, numbers, underscores, or hyphens"
+        })
+        .min(2, {
+            message: "The page slug must be at least 2 characters.",
+        })
 });
 
 export async function editPageAction({request}: LoaderFunctionArgs) {

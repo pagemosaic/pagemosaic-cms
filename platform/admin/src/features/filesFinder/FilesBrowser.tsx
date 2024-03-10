@@ -73,6 +73,11 @@ export function FilesBrowser(props: FilesBrowserProps) {
 
     return (
         <div className="w-full h-[450px] flex flex-col gap-2">
+            {asyncStatus.isError && (
+                <div>
+                    <p className="text-xs text-red-600">{asyncStatus.error}</p>
+                </div>
+            )}
             <div className="flex flex-row gap-2 items-center flex-nowrap">
                 {folderPath.map((folder) => {
                     return (
