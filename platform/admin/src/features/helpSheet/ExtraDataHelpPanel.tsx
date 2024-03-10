@@ -50,6 +50,27 @@ const fieldDataConfigSnippet = `{
     ]
 }`;
 
+const nestingFieldDataConfigSnippet = `{
+    "label": "New Field",
+    "key": "newFieldKey",
+    "type": "composite",
+    "isArray": false,
+    "nested": [
+        {
+            "label": "New Field 1",
+            "key": "newFieldKey1",
+            "type": "string",
+            "isArray": false,
+        },    
+        {
+            "label": "New Field 2",
+            "key": "newFieldKey2",
+            "type": "string",
+            "isArray": false,
+        }    
+    ]
+}`;
+
 const identificationSectionsMap: Array<{ label: string; snippet: string }> = [
     {
         label: 'Page Title',
@@ -88,6 +109,10 @@ const contentConfigSectionsMap: Array<{ label: string; snippet: string }> = [
     {
         label: 'Field Data Config',
         snippet: fieldDataConfigSnippet,
+    },
+    {
+        label: 'Field With Nested Fields Data Config',
+        snippet: nestingFieldDataConfigSnippet,
     }
 ];
 

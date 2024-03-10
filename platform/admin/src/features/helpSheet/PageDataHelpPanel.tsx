@@ -4,11 +4,10 @@ import {CopyToClipboardButton} from '@/components/utils/CopyToClipboardButton';
 import {
     ContentDataConfigClass,
     ContentDataFieldClass,
-    ContentDataFieldTypes,
-    ContentDataFieldVariant
+    ContentDataFieldTypes
 } from 'infra-common/data/ContentDataConfig';
 
-type TemplateFunc = (blockKey: string, fieldKey: string, variants?: Array<ContentDataFieldVariant>) => string;
+type TemplateFunc = (pathPrefix: string, fieldClass: ContentDataFieldClass) => string;
 
 const loopThroughTheBlocksTemplate = template(`{% for pageBlock in thisPage.blocks %}
     <% if (blockKeys.length > 0) { %>
@@ -35,58 +34,82 @@ const getBlockLoopTemplate = (blockKey: string) => {
 };
 
 const useFieldTemplateMap: Record<typeof ContentDataFieldTypes[number], TemplateFunc> = {
-    'string': (blockKey: string, fieldKey: string, variants?: Array<ContentDataFieldVariant>) => {
-        let result = `{{ ${blockKey}.fields.${fieldKey}.stringValue }}`;
-        if (variants) {
+    'string': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        let result = `{{ ${pathPrefix}.${fieldClass.key}.stringValue }}`;
+        if (fieldClass.variants) {
             result += '\n\n<!-- Choose variant value -->\n';
-            result += `{{ assign ${fieldKey} = ${blockKey}.fields.${fieldKey}.stringValue }}\n`;
-            variants.forEach(variant => {
-                result += `{% if ${fieldKey} == '${variant.value}' %}\n{% endif %}\n`;
+            result += `{{ assign ${fieldClass.key} = ${pathPrefix}.${fieldClass.key}.stringValue }}\n`;
+            fieldClass.variants.forEach(variant => {
+                result += `{% if ${fieldClass.key} == '${variant.value}' %}\n{% endif %}\n`;
             });
         }
         return result;
     },
-    'image': (blockKey: string, fieldKey: string) => `{{ ${blockKey}.fields.${fieldKey}.imageSrc }}\n{{ ${blockKey}.fields.${fieldKey}.imageAlt }}`,
-    'page_link': (blockKey: string, fieldKey: string) => {
-        let result = `{% assign linkedPage = site.pages[${blockKey}.fields.${fieldKey}.pageId] %}\n`;
+    'image': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        return `{{ ${pathPrefix}.${fieldClass.key}.imageSrc }}\n{{ ${pathPrefix}.${fieldClass.key}.imageAlt }}`
+    },
+    'page_link': (blockKey: string, fieldClass: ContentDataFieldClass) => {
+        let result = `{% assign linkedPage = site.pages[${blockKey}.fields.${fieldClass.key}.pageId] %}\n`;
         result += '{{ linkedPage.title }}\n';
         result += '{{ linkedPage.route }}\n';
         return result;
     },
-    'rich_text': (blockKey: string, fieldKey: string) => `{{ ${blockKey}.fields.${fieldKey}.richTextValue }}`,
+    'rich_text': (pathPrefix: string, fieldClass: ContentDataFieldClass) => `{{ ${pathPrefix}.${fieldClass.key}.richTextValue }}`,
+    'composite': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        if (fieldClass.nested) {
+            let result = `{% assign ${fieldClass.key} = ${pathPrefix}.${fieldClass.key} %}\n`;
+            result += '<!-- get nested field -->\n';
+            return result;
+        }
+        return '';
+    }
 };
 
 const useFieldArrayTemplateMap: Record<typeof ContentDataFieldTypes[number], TemplateFunc> = {
-    'string': (blockKey: string, fieldKey: string, variants?: Array<ContentDataFieldVariant>) => {
-        let result = `{% for ${fieldKey} in ${blockKey}.fields.${fieldKey} %}\n`;
-        result += `\t{{ ${fieldKey}.stringValue }}\n`;
-        if (variants) {
+    'string': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        let result = `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n`;
+        result += `\t{{ ${fieldClass.key}.stringValue }}\n`;
+        if (fieldClass.variants) {
             result += '\n\t\n<!-- Choose variant value -->\n';
-            result += `\t{{ assign ${fieldKey} = ${blockKey}.fields.${fieldKey}.stringValue }}\n`;
-            variants.forEach(variant => {
-                result += `\t{% if ${fieldKey} == '${variant.value}' %}\n{% endif %}\n`;
+            result += `\t{{ assign ${fieldClass.key} = ${pathPrefix}.${fieldClass.key}.stringValue }}\n`;
+            fieldClass.variants.forEach(variant => {
+                result += `\t{% if ${fieldClass.key} == '${variant.value}' %}\n{% endif %}\n`;
             });
         }
         result += '{% endfor %}';
         return result;
     },
-    'image': (blockKey: string, fieldKey: string) => `{% for ${fieldKey} in ${blockKey}.fields.${fieldKey} %}\n\t{{ ${fieldKey}.imageSrc }}\n\t{{ ${fieldKey}.imageAlt }}\n{% endfor %}`,
-    'page_link': (blockKey: string, fieldKey: string) => {
-        let result = `{% for ${fieldKey} in ${blockKey}.fields.${fieldKey} %}\n`;
-        result += `\t{% assign linkedPage = site.pages[${fieldKey}.pageId] %}\n`;
+    'image': (pathPrefix: string, fieldClass: ContentDataFieldClass) => `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n\t{{ ${fieldClass.key}.imageSrc }}\n\t{{ ${fieldClass.key}.imageAlt }}\n{% endfor %}`,
+    'page_link': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        let result = `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n`;
+        result += `\t{% assign linkedPage = site.pages[${fieldClass.key}.pageId] %}\n`;
         result += '\t{{ linkedPage.title }}\n';
         result += '\t{{ linkedPage.route }}\n';
         result += `{% endfor %}`;
         return result;
     },
-    'rich_text': (blockKey: string, fieldKey: string) => `{% for ${fieldKey} in ${blockKey}.fields.${fieldKey} %}\n\t{{ ${fieldKey}.richTextValue }}\n{% endfor %}`,
+    'rich_text': (pathPrefix: string, fieldClass: ContentDataFieldClass) => `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n\t{{ ${fieldClass.key}.richTextValue }}\n{% endfor %}`,
+    'composite': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        if (fieldClass.nested) {
+            let result = `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n`;
+            result += '\t<!-- get nested field -->\n';
+            result += '{% endfor %}';
+            return result;
+        }
+        return '';
+    }
 };
 
 interface PageDataHelpPanelProps {
     pageContentDataConfig: string;
 }
 
-function FieldDot() {
+function FieldDot({nested}: {nested?: boolean}) {
+    if (nested) {
+        return (
+            <span className="absolute -left-[13px] top-[12px] w-[7px] h-[2px] bg-slate-400"/>
+        );
+    }
     return (
         <span className="absolute -left-[13px] top-[12px] w-[5px] h-[5px] bg-slate-400 rounded-full"/>
     );
@@ -169,8 +192,37 @@ export function PageDataHelpPanel(props: PageDataHelpPanelProps) {
                         <ul>
                             {blockClass.fields.map((field: ContentDataFieldClass, fieldIndex: number) => {
                                 const useField = field.isArray
-                                    ? useFieldArrayTemplateMap[field.type](blockKey, field.key, field.variants)
-                                    : useFieldTemplateMap[field.type](blockKey, field.key, field.variants);
+                                    ? useFieldArrayTemplateMap[field.type](`${blockKey}.fields`, field)
+                                    : useFieldTemplateMap[field.type](`${blockKey}.fields`, field);
+                                let nestedFields = null;
+                                if (field.type === 'composite' && field.nested) {
+                                    nestedFields = (
+                                        <ul className="pl-6">
+                                            {field.nested.map((nestedField: ContentDataFieldClass, nestedFieldIndex: number) => {
+                                                const useNestedField = nestedField.isArray
+                                                    ? useFieldArrayTemplateMap[nestedField.type](`${field.key}.nested`, nestedField)
+                                                    : useFieldTemplateMap[nestedField.type](`${field.key}.nested`, nestedField);
+                                                return (
+                                                    <li key={`${nestedField.key}_${nestedFieldIndex}`}
+                                                        className="flex flex-col gap-2 relative">
+                                                        <FieldDot nested={true}/>
+                                                        <h5>Get <code>{nestedField.label}</code> field</h5>
+                                                        <div className="relative">
+                                                            <CopyToClipboardButton
+                                                                className="absolute -right-[5px] -top-[5px] z-10 bg-slate-100 text-slate-600"
+                                                                variant="outline"
+                                                                size="xs"
+                                                                text={useNestedField}
+                                                            />
+                                                            <pre
+                                                                className="w-full overflow-auto"><code>{useNestedField}</code></pre>
+                                                        </div>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    );
+                                }
                                 return (
                                     <li key={`${field.key}_${fieldIndex}`} className="flex flex-col gap-2 relative">
                                         <FieldDot/>
@@ -184,6 +236,7 @@ export function PageDataHelpPanel(props: PageDataHelpPanelProps) {
                                             />
                                             <pre className="w-full overflow-auto"><code>{useField}</code></pre>
                                         </div>
+                                        {nestedFields}
                                     </li>
                                 );
                             })}

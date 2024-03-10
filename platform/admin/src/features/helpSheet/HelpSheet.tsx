@@ -4,10 +4,9 @@ import {Tabs, TabsList, TabsTrigger, TabsContent} from '@/components/ui/tabs';
 import {useSessionState} from '@/utils/localStorage';
 import {PageDataHelpPanel} from '@/features/helpSheet/PageDataHelpPanel';
 import {PageDataSessionKeys, pageDataSingleton} from '@/data/PageData';
-import {SiteDataSessionKeys, siteDataSingleton} from '@/data/SiteData';
+import {SiteDataSessionKeys} from '@/data/SiteData';
 import {DI_TemplateEntry, DI_SiteEntry, DI_PageEntry} from 'infra-common/data/DocumentItem';
 import {SiteDataHelpPanel} from '@/features/helpSheet/SiteDataHelpPanel';
-import {MetaDataHelpPanel} from '@/features/helpSheet/MetaDataHelpPanel';
 import {ExtraDataHelpPanel} from '@/features/helpSheet/ExtraDataHelpPanel';
 import {PagesData} from '@/data/PagesData';
 import {SelectTrigger, SelectValue, SelectContent, SelectItem, Select} from '@/components/ui/select';
@@ -61,7 +60,7 @@ export const HelpSheet = forwardRef<HelpSheepHandler, HelpSheetProps>((props, re
     return (
         <Sheet open={open} onOpenChange={setOpen} modal={false}>
             <SheetContent
-                className="w-[700px] sm:w-[540px]"
+                className="w-[700px] sm:w-[700px]"
                 side="right"
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 onInteractOutside={(e) => e.preventDefault()}

@@ -94,14 +94,35 @@ const contentDataFieldWithVariantsClassSnippet = `{
     ]
 }`;
 
-const contentDataBlockClassSnippet = `{
-    "label": "\${1:Block Label}",
+const contentDataFieldWithNestedClassSnippet = `{
+    "label": "\${1:Field Label}",
+    "key": "\${2:fieldKey}",
+    "type": "composite",
+    "isArray": \${3:false},
+    "nested": [
+        {
+            "label": "New Field 1",
+            "key": "newFieldKey1",
+            "type": "string",
+            "isArray": false,
+        },    
+        {
+            "label": "New Field 2",
+            "key": "newFieldKey2",
+            "type": "string",
+            "isArray": false,
+        }    
+    ]
+}`;
+
+const contentDataBlockClassSnippet = `"\${1:blockKey}": {
+    "label": "\${2:Block Label}",
     "fields": [
         {
-            "label": "\${2:Field Label}",
-            "key": "\${3:fieldKey}",
-            "type": "\${4:string}",
-            "isArray": \${5:false}
+            "label": "\${3:Field Label}",
+            "key": "\${4:fieldKey}",
+            "type": "\${5:string}",
+            "isArray": \${6:false}
         }
     ]
 }`;
@@ -199,6 +220,13 @@ export function CodeEditorJson(props: CodeEditorJsonProps) {
                                         {
                                             label: 'Insert a field with variants',
                                             insertText: contentDataFieldWithVariantsClassSnippet,
+                                            kind: monaco.languages.CompletionItemKind.Snippet,
+                                            insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+                                            range
+                                        },
+                                        {
+                                            label: 'Insert a field with nested fields',
+                                            insertText: contentDataFieldWithNestedClassSnippet,
                                             kind: monaco.languages.CompletionItemKind.Snippet,
                                             insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
                                             range
