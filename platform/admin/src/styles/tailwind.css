@@ -90,3 +90,11 @@
 .prose-fixed p, .prose-fixed h1, .prose-fixed h2, .prose-fixed h3, .prose-fixed h4, .prose-fixed ul {
   margin: 0;
 }
+
+.show-element {
+  display: none;
+}
+
+.hover-target:hover + .show-element {
+  display: block;
+}

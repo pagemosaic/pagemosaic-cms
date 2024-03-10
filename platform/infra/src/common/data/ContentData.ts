@@ -4,6 +4,7 @@ export type ContentDataField = {
     imageSrc?: string;
     imageAlt?: string;
     pageId?: string;
+    nested?: Record<string, ContentDataField>;
 };
 
 export type ContentDataBlock = {

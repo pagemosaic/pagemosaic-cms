@@ -4,11 +4,25 @@ import {Label} from '@/components/ui/label';
 import {Popover, PopoverTrigger, PopoverContent} from '@/components/ui/popover';
 import {ButtonAction} from '@/components/utils/ButtonAction';
 
-export function FieldLabel({label, field, help}: {label: string; field?: string, help?: string}) {
+interface FieldLabelProps {
+    label: string;
+    field?: string;
+    help?: string;
+    nested?: boolean;
+    controls?: React.ReactNode;
+    className?: string;
+}
+
+export function FieldLabel(props: FieldLabelProps) {
+    const {label, field, help, nested, controls, className = ''} = props;
     return (
-        <Label className="flex flex-row gap-2 items-center text-muted-foreground relative font-semibold" htmlFor={field}>
-            <span className="absolute -left-[13px] top-[calc(50%-3px)] w-[5px] h-[5px] bg-slate-400 rounded-full" />
+        <Label className={`flex flex-row gap-2 items-center text-muted-foreground relative font-semibold ${className}`} htmlFor={field}>
+            {nested
+                ? (<span className="absolute -left-[24px] top-[calc(50%-1px)] w-[20px] border-t-[2px] border-dotted border-slate-300" />)
+                : (<span className="absolute -left-[13px] top-[calc(50%-3px)] w-[5px] h-[5px] bg-slate-400 rounded-full" />)
+            }
             {label}
+            {controls}
             {help && (
                 <Popover>
                     <PopoverTrigger asChild>

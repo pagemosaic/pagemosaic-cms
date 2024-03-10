@@ -18,6 +18,14 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
                 const fieldPath = `${index}.fields.${fieldConfig.key}`;
                 let fieldValue = get(existingObject, fieldPath, undefined) as ContentDataField | Array<ContentDataField> | undefined;
 
+                if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                    fieldConfig.nested.forEach((nestedFieldConfig) => {
+                        const nestedFieldPath = `${fieldPath}.nested.${nestedFieldConfig.key}`;
+                        let nestedFieldValue = get(existingObject, nestedFieldPath, {});
+                        set(newBlockData, `fields.${fieldConfig.key}.nested.${nestedFieldConfig.key}`, nestedFieldValue);
+                    });
+                }
+
                 if (fieldValue === undefined || fieldConfig.isArray !== Array.isArray(fieldValue)) {
                     fieldValue = fieldConfig.isArray ? [] : {};
                 }
@@ -34,15 +42,27 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
 export function isContentDataBlockEmpty(contentDataBlock: ContentDataBlock): boolean {
     const fields = contentDataBlock.fields;
     for (const key in fields) {
-        const value = fields[key];
+        const value = fields[key] as ContentDataField;
         if (Array.isArray(value)) {
             for (const item of value) {
-                if (!isFieldEmpty(item)) {
+                if (item.nested) {
+                    for (const nestedKey in item.nested) {
+                        if (!isFieldEmpty(item.nested[nestedKey])) {
+                            return false;
+                        }
+                    }
+                } else if (!isFieldEmpty(item)) {
                     return false;
                 }
             }
         } else {
-            if (!isFieldEmpty(value)) {
+            if (value.nested) {
+                for (const nestedKey in value.nested) {
+                    if (!isFieldEmpty(value.nested[nestedKey])) {
+                        return false;
+                    }
+                }
+            } else if (!isFieldEmpty(value)) {
                 return false;
             }
         }

@@ -2,7 +2,8 @@ export const ContentDataFieldTypes = [
     'image',
     'string',
     'rich_text',
-    'page_link'
+    'page_link',
+    'composite'
 ] as const;
 
 export type ContentDataFieldVariant = {
@@ -10,13 +11,17 @@ export type ContentDataFieldVariant = {
     value: string;
 };
 
-export type ContentDataFieldClass = {
+export type ContentDataFieldBaseClass = {
     label: string;
     key: string;
     type: typeof ContentDataFieldTypes[number];
-    isArray?: boolean;
     variants?: Array<ContentDataFieldVariant>;
     help?: string;
+};
+
+export type ContentDataFieldClass = ContentDataFieldBaseClass & {
+    isArray?: boolean;
+    nested?: Array<ContentDataFieldBaseClass>;
 };
 
 export type ContentDataBlockClass = {
