@@ -590,10 +590,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                 className={cn('flex flex-col gap-4', {'pb-4': !pageCollapsedBlocks[blockId]})}
                                                             >
                                                                 <div
-                                                                    className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent", {
+                                                                    className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 cursor-pointer rounded-[6px] border-[1px] border-transparent", {
                                                                         'bg-slate-100': !isBlockEmpty,
                                                                         'bg-orange-100': isBlockEmpty
                                                                     })}
+                                                                    onClick={handleToggleBlock(blockId)}
                                                                 >
                                                                     <div
                                                                         className="flex flex-row gap-2 items-center justify-center flex-grow">
@@ -603,10 +604,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             onSelect={handleMoveBlock(blockIndex)}
                                                                             label={foundBlockClass.label}
                                                                         />
-                                                                        <p
-                                                                            className="text-sm text-muted-foreground font-medium line-clamp-1 cursor-pointer"
-                                                                            onClick={handleToggleBlock(blockId)}
-                                                                        >
+                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
                                                                             {foundBlockClass.label}
                                                                         </p>
                                                                         {pageCollapsedBlocks[blockId]

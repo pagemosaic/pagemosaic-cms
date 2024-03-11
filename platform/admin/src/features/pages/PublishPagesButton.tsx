@@ -104,7 +104,7 @@ export function PublishPagesButton(props: PublishPagesButtonProps) {
             formDataParams: {},
             Icon: LucideSave,
             buttonLabel: 'Save',
-            dialogType: 'confirm',
+            dialogType: 'progress',
             render: ({isInAction}) => {
                 return <DelayedLoading
                     isLoading={isInAction}

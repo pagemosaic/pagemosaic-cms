@@ -420,7 +420,7 @@ export function AllPagesView(props: AllPagesViewProps) {
                                                                                         <div>
                                                                                             <GeneratorStatus
                                                                                                 created={created}
-                                                                                                updated={updated}
+                                                                                                updated={templateRow.updated > updated ? templateRow.updated : updated}
                                                                                                 lastRun={lastRun}
                                                                                             />
                                                                                         </div>

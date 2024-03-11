@@ -18,6 +18,8 @@ export type PageRow = {
 export type TemplateRow = {
     templateId: string;
     templateTitle: string;
+    created: number;
+    updated: number;
     pages: Array<PageRow>;
 };
 
@@ -72,7 +74,9 @@ export function listToTree(pagesEntries: Array<DI_PageEntry>, templateEntries: A
                                 foundNodeTemplate = {
                                     pages: [],
                                     templateId: Meta.PageTemplateId.S,
-                                    templateTitle: pageTemplates[0].Meta?.TemplateTitle.S || ''
+                                    templateTitle: pageTemplates[0].Meta?.TemplateTitle.S || '',
+                                    updated: Number(pageTemplates[0].Entry?.EntryUpdateDate.N || 0),
+                                    created: Number(pageTemplates[0].Entry?.EntryCreateDate.N || 0),
                                 };
                                 node.templates.push(foundNodeTemplate);
                             }
@@ -139,6 +143,8 @@ export function findTemplatesByFilter(root: PagesNode, filter: string): Array<Te
                 foundTemplates.push({
                     templateId: template.templateId,
                     templateTitle: template.templateTitle,
+                    created: template.created,
+                    updated: template.updated,
                     pages: foundPagesInTemplate
                 });
             }

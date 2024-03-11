@@ -66,7 +66,7 @@ export const ActionFormProvider: React.FC<ActionFormProviderProps> = (props) => 
                 setOpenConfirmDialog(false);
             }
             if (openProgressDialog) {
-                setOpenConfirmDialog(false);
+                setOpenProgressDialog(false);
             }
             if (dialogOptions?.forwardTo) {
                 navigate(dialogOptions.forwardTo);
