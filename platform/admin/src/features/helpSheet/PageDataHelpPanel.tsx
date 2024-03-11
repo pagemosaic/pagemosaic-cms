@@ -48,8 +48,8 @@ const useFieldTemplateMap: Record<typeof ContentDataFieldTypes[number], Template
     'image': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
         return `{{ ${pathPrefix}.${fieldClass.key}.imageSrc }}\n{{ ${pathPrefix}.${fieldClass.key}.imageAlt }}`
     },
-    'page_link': (blockKey: string, fieldClass: ContentDataFieldClass) => {
-        let result = `{% assign linkedPage = site.pages[${blockKey}.fields.${fieldClass.key}.pageId] %}\n`;
+    'page_link': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
+        let result = `{% assign linkedPage = site.pages[${pathPrefix}.${fieldClass.key}.pageId] %}\n`;
         result += '{{ linkedPage.title }}\n';
         result += '{{ linkedPage.route }}\n';
         return result;
