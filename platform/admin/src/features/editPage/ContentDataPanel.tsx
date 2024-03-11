@@ -6,7 +6,9 @@ import {
     LucideSettings,
     LucideMinus,
     LucidePlus,
-    LucideChevronDown, LucideAlertTriangle, LucideHelpCircle, LucideCopy, LucideCopyPlus
+    LucideChevronDown,
+    LucideAlertTriangle,
+    LucideCopy
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -540,7 +542,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                         <div className="flex-grow relative h-full">
                             <div className="absolute inset-0">
                                 <ScrollArea viewportRef={scrollAreaRef} className="h-full w-full">
-                                    <CardContent className="h-full flex flex-col gap-2 relative">
+                                    <CardContent className="h-full flex flex-col gap-2 pb-36 relative">
                                         <div className="h-full w-full flex flex-col gap-4">
                                             {contentDataError && (
                                                 <div>

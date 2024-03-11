@@ -6,7 +6,8 @@ import {
     LucideSettings,
     LucideMinus,
     LucidePlus,
-    LucideChevronDown, LucideCopy
+    LucideChevronDown,
+    LucideCopy
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -16,7 +17,6 @@ import {
     ContentDataBlockClass,
     ContentDataFieldClass
 } from 'infra-common/data/ContentDataConfig';
-import {Label} from '@/components/ui/label';
 import {
     ContentData,
     ContentDataBlock,
@@ -285,9 +285,84 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
+    const renderControl = (
+        fieldClass: ContentDataFieldClass,
+        fieldPath: string,
+    ) => {
+        return (
+            <div className="ml-3 flex flex-col gap-2">
+                {fieldClass.type === 'string' && !fieldClass.variants && (
+                    <ControlString
+                        key={fieldPath}
+                        controlKey={pageContentUniqueKey}
+                        contentData={contentData}
+                        fieldPath={fieldPath}
+                        disabled={isInAction}
+                        onChange={handleContentDataChange}
+                    />
+                )}
+                {fieldClass.type === 'string' && !!fieldClass.variants && (
+                    <ControlStringWithVariants
+                        key={fieldPath}
+                        controlKey={pageContentUniqueKey}
+                        contentData={contentData}
+                        fieldClass={fieldClass}
+                        fieldPath={fieldPath}
+                        disabled={isInAction}
+                        onChange={handleContentDataChange}
+                    />
+                )}
+                {fieldClass.type === 'image' && (
+                    <ControlImage
+                        key={fieldPath}
+                        controlKey={pageContentUniqueKey}
+                        fieldPath={fieldPath}
+                        contentData={contentData}
+                        disabled={isInAction}
+                        onChange={handleContentDataChange}
+                    />
+                )}
+                {fieldClass.type === 'rich_text' && (
+                    <ControlTipTap
+                        key={fieldPath}
+                        controlKey={pageContentUniqueKey}
+                        fieldPath={fieldPath}
+                        contentData={contentData}
+                        disabled={isInAction}
+                        onChange={handleContentDataChange}
+                    />
+                )}
+                {fieldClass.type === 'page_link' && (
+                    <ControlLink
+                        key={fieldPath}
+                        controlKey={pageContentUniqueKey}
+                        fieldPath={fieldPath}
+                        contentData={contentData}
+                        pagesData={pagesData}
+                        disabled={isInAction}
+                        onChange={handleContentDataChange}
+                    />
+                )}
+                {fieldClass.type === 'composite' && fieldClass.nested && (
+                    <div className="py-2 pl-6 flex flex-col gap-6 border-l-[2px] border-slate-300 border-dotted">
+                        {fieldClass.nested.map((nestedFieldClass: ContentDataFieldClass) => {
+                            const nestedFieldPath = `${fieldPath}.nested.${nestedFieldClass.key}`;
+                            return renderField(nestedFieldClass, nestedFieldPath, true);
+                        })}
+                    </div>
+                )}
+                <ActionDataFieldError
+                    actionData={actionData}
+                    fieldName={fieldPath}
+                />
+            </div>
+        );
+    };
+
     const renderField = (
         fieldClass: ContentDataFieldClass,
-        fieldPath: string
+        fieldPath: string,
+        nested?: boolean
     ) => {
         const isFieldArray = !!fieldClass.isArray;
         if (isFieldArray) {
@@ -295,14 +370,26 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             if (fieldsContents.length === 0) {
                 return (
                     <div key={`firstField_${fieldClass.key}`}
-                         className="flex flex-row gap-2 items-center justify-between pr-2 rounded-[6px] border-[1px] border-transparent border-dashed hover:border-slate-300">
-                        <FieldLabel label={fieldClass.label}/>
+                         className="relative flex flex-row gap-2 items-center justify-between pr-2">
+                        <FieldLabel
+                            label={fieldClass.label}
+                            field=""
+                            help={fieldClass.help}
+                            nested={nested}
+                            className="pr-2 bg-white z-20"
+                            controls={
+                                <span className="text-xs text-muted-foreground">[no items]</span>
+                            }
+                        />
                         <ButtonAction
                             Icon={LucidePlus}
                             size="xxs"
                             variant="outline"
+                            className="hover-target"
                             onClick={handleAddNewField(fieldPath, 0)}
                         />
+                        <div
+                            className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[30px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                     </div>
                 );
             } else {
@@ -310,22 +397,23 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                     return (
                         <div key={`field_${fieldClass.key}_${fieldContentIndex}`} className="flex flex-col gap-2">
                             <div
-                                className="flex flex-row gap-2 items-center justify-between pr-2 rounded-[6px] border-[1px] border-transparent border-dashed hover:border-slate-300">
-                                <Label
-                                    className="flex flex-row gap-2 items-center text-muted-foreground font-semibold relative"
-                                    htmlFor={`${fieldPath}.${fieldContentIndex}`}
-                                >
-                                    <span
-                                        className="absolute -left-[13px] top-[calc(50%-3px)] w-[5px] h-[5px] bg-slate-400 rounded-full"/>
-                                    {fieldClass.label}
-                                    <IndexPositionBadge
-                                        index={fieldContentIndex}
-                                        length={fieldsContents.length}
-                                        onSelect={handleMoveField(fieldPath, fieldContentIndex)}
-                                        label={fieldClass.label}
-                                    />
-                                </Label>
-                                <div className="flex flex-row gap-2 items-center">
+                                className="relative flex flex-row gap-2 items-center justify-between pr-2">
+                                <FieldLabel
+                                    label={fieldClass.label}
+                                    field={`${fieldPath}.${fieldContentIndex}`}
+                                    help={fieldClass.help}
+                                    className="bg-white z-20 pr-2"
+                                    controls={
+                                        <IndexPositionBadge
+                                            index={fieldContentIndex}
+                                            length={fieldsContents.length}
+                                            onSelect={handleMoveField(fieldPath, fieldContentIndex)}
+                                            label={fieldClass.label}
+                                        />
+                                    }
+                                    nested={nested}
+                                />
+                                <div className="flex flex-row gap-2 items-center hover-target">
                                     <ButtonAction
                                         Icon={LucideMinus}
                                         size="xxs"
@@ -339,65 +427,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                         onClick={handleAddNewField(fieldPath, fieldContentIndex + 1)}
                                     />
                                 </div>
+                                <div
+                                    className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[60px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                             </div>
-                            <div className="ml-3 flex flex-col gap-2">
-                                {fieldClass.type === 'string' && !fieldClass.variants && (
-                                    <ControlString
-                                        key={`${fieldPath}.${fieldContentIndex}`}
-                                        controlKey={pageContentUniqueKey}
-                                        contentData={contentData}
-                                        fieldPath={`${fieldPath}.${fieldContentIndex}`}
-                                        disabled={isInAction}
-                                        onChange={handleContentDataChange}
-                                    />
-                                )}
-                                {fieldClass.type === 'string' && !!fieldClass.variants && (
-                                    <ControlStringWithVariants
-                                        key={`${fieldPath}.${fieldContentIndex}`}
-                                        controlKey={pageContentUniqueKey}
-                                        contentData={contentData}
-                                        fieldClass={fieldClass}
-                                        fieldPath={`${fieldPath}.${fieldContentIndex}`}
-                                        disabled={isInAction}
-                                        onChange={handleContentDataChange}
-                                    />
-                                )}
-                                {fieldClass.type === 'image' && (
-                                    <ControlImage
-                                        key={`${fieldPath}.${fieldContentIndex}`}
-                                        controlKey={pageContentUniqueKey}
-                                        fieldPath={`${fieldPath}.${fieldContentIndex}`}
-                                        contentData={contentData}
-                                        disabled={isInAction}
-                                        onChange={handleContentDataChange}
-                                    />
-                                )}
-                                {fieldClass.type === 'rich_text' && (
-                                    <ControlTipTap
-                                        key={`${fieldPath}.${fieldContentIndex}`}
-                                        controlKey={pageContentUniqueKey}
-                                        fieldPath={`${fieldPath}.${fieldContentIndex}`}
-                                        contentData={contentData}
-                                        disabled={isInAction}
-                                        onChange={handleContentDataChange}
-                                    />
-                                )}
-                                {fieldClass.type === 'page_link' && (
-                                    <ControlLink
-                                        key={`${fieldPath}.${fieldContentIndex}`}
-                                        controlKey={pageContentUniqueKey}
-                                        fieldPath={`${fieldPath}.${fieldContentIndex}`}
-                                        contentData={contentData}
-                                        pagesData={pagesData}
-                                        disabled={isInAction}
-                                        onChange={handleContentDataChange}
-                                    />
-                                )}
-                                <ActionDataFieldError
-                                    actionData={actionData}
-                                    fieldName={fieldPath}
-                                />
-                            </div>
+                            {renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
                         </div>
                     );
                 });
@@ -405,65 +438,8 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         } else {
             return (
                 <div key={`field_${fieldClass.key}`} className="flex flex-col gap-2">
-                    <FieldLabel label={fieldClass.label} field={fieldPath}/>
-                    <div className="ml-3 flex flex-col gap-2">
-                        {fieldClass.type === 'string' && !fieldClass.variants && (
-                            <ControlString
-                                key={fieldPath}
-                                controlKey={pageContentUniqueKey}
-                                contentData={contentData}
-                                fieldPath={fieldPath}
-                                disabled={isInAction}
-                                onChange={handleContentDataChange}
-                            />
-                        )}
-                        {fieldClass.type === 'string' && !!fieldClass.variants && (
-                            <ControlStringWithVariants
-                                key={fieldPath}
-                                controlKey={pageContentUniqueKey}
-                                contentData={contentData}
-                                fieldClass={fieldClass}
-                                fieldPath={fieldPath}
-                                disabled={isInAction}
-                                onChange={handleContentDataChange}
-                            />
-                        )}
-                        {fieldClass.type === 'image' && (
-                            <ControlImage
-                                key={fieldPath}
-                                controlKey={pageContentUniqueKey}
-                                contentData={contentData}
-                                fieldPath={fieldPath}
-                                disabled={isInAction}
-                                onChange={handleContentDataChange}
-                            />
-                        )}
-                        {fieldClass.type === 'rich_text' && (
-                            <ControlTipTap
-                                key={fieldPath}
-                                controlKey={pageContentUniqueKey}
-                                contentData={contentData}
-                                fieldPath={fieldPath}
-                                disabled={isInAction}
-                                onChange={handleContentDataChange}
-                            />
-                        )}
-                        {fieldClass.type === 'page_link' && (
-                            <ControlLink
-                                key={fieldPath}
-                                controlKey={pageContentUniqueKey}
-                                contentData={contentData}
-                                fieldPath={fieldPath}
-                                pagesData={pagesData}
-                                disabled={isInAction}
-                                onChange={handleContentDataChange}
-                            />
-                        )}
-                        <ActionDataFieldError
-                            actionData={actionData}
-                            fieldName={fieldPath}
-                        />
-                    </div>
+                    <FieldLabel label={fieldClass.label} field={fieldPath} help={fieldClass.help} nested={nested}/>
+                    {renderControl(fieldClass, fieldPath)}
                 </div>
             );
         }
@@ -555,7 +531,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                         <div className="flex-grow relative h-full">
                             <div className="absolute inset-0">
                                 <ScrollArea viewportRef={scrollAreaRef} className="grow h-full w-full">
-                                    <CardContent className="h-full flex flex-col gap-2 relative">
+                                    <CardContent className="h-full flex flex-col gap-2 pb-36 relative">
                                         <div className="h-full w-full flex flex-col gap-4">
                                             {contentDataError && (
                                                 <div>

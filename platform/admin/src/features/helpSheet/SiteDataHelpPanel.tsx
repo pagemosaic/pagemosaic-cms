@@ -208,7 +208,7 @@ export function SiteDataHelpPanel(props: SiteDataHelpPanelProps) {
                                                     <li key={`${nestedField.key}_${nestedFieldIndex}`}
                                                         className="flex flex-col gap-2 relative">
                                                         <FieldDot nested={true}/>
-                                                        <h5>Get <code>{nestedField.label}</code> field</h5>
+                                                        <h5>Get <code>{nestedField.label}</code> nested field</h5>
                                                         <div className="relative">
                                                             <CopyToClipboardButton
                                                                 className="absolute -right-[5px] -top-[5px] z-10 bg-slate-100 text-slate-600"

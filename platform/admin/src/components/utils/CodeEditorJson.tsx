@@ -104,13 +104,13 @@ const contentDataFieldWithNestedClassSnippet = `{
             "label": "New Field 1",
             "key": "newFieldKey1",
             "type": "string",
-            "isArray": false,
+            "isArray": false
         },    
         {
             "label": "New Field 2",
             "key": "newFieldKey2",
             "type": "string",
-            "isArray": false,
+            "isArray": false
         }    
     ]
 }`;
