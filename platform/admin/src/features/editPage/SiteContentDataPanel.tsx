@@ -7,7 +7,7 @@ import {
     LucideMinus,
     LucidePlus,
     LucideChevronDown,
-    LucideCopy
+    LucideCopy, LucideChevronUp, LucideAlertTriangle
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -70,6 +70,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         value: selectedGroup = 'Default',
         saveValue: saveSelectedGroup
     } = useSessionState<string>('selectedSiteDataGroup');
+    const {
+        value: collapsedBlocks = {},
+        saveValue: setCollapsedBlocks
+    } = useSessionState<Record<string, boolean>>('siteContentCollapsedBlocks');
+
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     if (!siteEntry || !siteEntry.SiteContent) {
@@ -149,6 +154,12 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
     // const groupedContentData: ContentData = contentData.filter(i => {
     //     return !!selectedBlockClasses[i.key];
     // });
+
+    const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCollapsedBlocks({...collapsedBlocks, [blockKey]: !collapsedBlocks[blockKey]});
+    };
 
     const handleContentDataChange = (newContentData: ContentData, doRefresh?: boolean) => {
         if (SiteContent && Entry) {
@@ -558,11 +569,12 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                     const foundBlockClass = selectedBlockClasses[contentDataBlock.key];
                                                     const isBlockEmpty = isContentDataBlockEmpty(contentDataBlock);
                                                     if (foundBlockClass) {
+                                                        const blockId = `block_${groupedContentDataIndexOffset[blockIndex]}_${contentDataBlock.key}`;
                                                         return (
                                                             <div
-                                                                id={`block_${groupedContentDataIndexOffset[blockIndex]}_${contentDataBlock.key}`}
-                                                                key={`block_${groupedContentDataIndexOffset[blockIndex]}_${contentDataBlock.key}`}
-                                                                className="flex flex-col gap-4"
+                                                                id={blockId}
+                                                                key={blockId}
+                                                                className={cn('flex flex-col gap-4', {'pb-4': !collapsedBlocks[blockId]})}
                                                             >
                                                                 <div
                                                                     className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent", {
@@ -578,7 +590,23 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             onSelect={handleMoveBlock(blockIndex)}
                                                                             label={foundBlockClass.label}
                                                                         />
-                                                                        <p className="text-sm text-muted-foreground font-medium">{foundBlockClass.label}</p>
+                                                                        <p
+                                                                            className="text-sm text-muted-foreground font-medium line-clamp-1 cursor-pointer"
+                                                                            onClick={handleToggleBlock(blockId)}
+                                                                        >
+                                                                            {foundBlockClass.label}
+                                                                        </p>
+                                                                        {collapsedBlocks[blockId]
+                                                                            ? (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                            : (<LucideChevronUp className="text-muted-foreground w-4 h-4" />)
+                                                                        }
+                                                                        {isBlockEmpty && (
+                                                                            <TooltipWrapper
+                                                                                text="All block fields are empty!">
+                                                                                <LucideAlertTriangle
+                                                                                    className="w-3 h-3 cursor-pointer text-orange-700"/>
+                                                                            </TooltipWrapper>
+                                                                        )}
                                                                     </div>
                                                                     <div className="flex flex-row gap-2 items-center">
                                                                         <ButtonAction
@@ -601,12 +629,14 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div className="pl-6 flex flex-col gap-6">
-                                                                    {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
-                                                                        const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;
-                                                                        return renderField(fieldClass, fieldPath);
-                                                                    })}
-                                                                </div>
+                                                                {!collapsedBlocks[blockId] && (
+                                                                    <div className="pl-6 flex flex-col gap-6">
+                                                                        {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
+                                                                            const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;
+                                                                            return renderField(fieldClass, fieldPath);
+                                                                        })}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     }
