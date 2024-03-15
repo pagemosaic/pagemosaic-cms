@@ -32,7 +32,8 @@ export const ContentDataBlockAddButton = React.forwardRef<HTMLButtonElement, Con
                     return (
                         <DropdownMenuItem
                             key={entry[0]}
-                            onSelect={() => {
+                            onSelect={(event: Event) => {
+                                event.stopPropagation();
                                 onSelect(entry[0]);
                             }}
                         >

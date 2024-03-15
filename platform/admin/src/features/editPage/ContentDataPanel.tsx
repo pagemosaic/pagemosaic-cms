@@ -165,6 +165,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
     }
 
     const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
+        console.log('handleToggleBlock');
         e.stopPropagation();
         e.preventDefault();
         let pageCollapsedBlocks = collapsedBlocks[pageId] || {};
@@ -632,7 +633,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             variant="outline"
                                                                             onClick={() => handleCopyBlock(blockIndex)}
                                                                         />
-                                                                        <div className="flex flex-row items-center">
+                                                                        <div className="flex flex-row items-center" onClick={e => e.preventDefault()}>
                                                                             <ContentDataBlockAddButton
                                                                                 blockRecords={selectedBlockClasses}
                                                                                 onSelect={(blockKey => handleAddNewBlock(blockKey, blockIndex, 1))}
