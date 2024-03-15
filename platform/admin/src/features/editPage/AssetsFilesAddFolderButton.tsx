@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react';
-import {LucideFolderPlus, LucideTrash2, LucideX, LucideCheck} from 'lucide-react';
+import {LucideFolderPlus, LucideX, LucideCheck} from 'lucide-react';
 import {TreeNode} from 'infra-common/system/Bucket';
 import {ButtonAction} from '@/components/utils/ButtonAction';
 import {
@@ -33,10 +33,12 @@ export function AssetsFilesAddFolderButton(props: AssetsFilesAddFolderButtonProp
         }
     }, [open]);
 
-    const deleteFiles = () => {
+    const addFolder = (e: React.FormEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (folderInputRef.current && node.path) {
             const directoryName = folderInputRef.current.value;
-            if (!directoryName || directoryName.length <= 2) {
+            if (!directoryName || directoryName.length === 0) {
                 setInputError('The folder name should be not empty.')
             } else {
                 setStatus({isLoading: true});
@@ -78,23 +80,25 @@ export function AssetsFilesAddFolderButton(props: AssetsFilesAddFolderButtonProp
                         </div>
                     )}
                 </DialogHeader>
-                <div className="grid flex-1 gap-2">
-                    <Label htmlFor="link" className="sr-only">
-                        Folder Name
-                    </Label>
-                    <Input
-                        ref={folderInputRef}
-                        id="directoryName"
-                        name="directoryName"
-                        defaultValue=""
-                        disabled={status.isLoading}
-                    />
-                    {inputError && (
-                        <div>
-                            <p className="text-xs text-red-600">{inputError}</p>
-                        </div>
-                    )}
-                </div>
+                <form onSubmit={addFolder}>
+                    <div className="grid flex-1 gap-2">
+                        <Label htmlFor="link" className="sr-only">
+                            Folder Name
+                        </Label>
+                        <Input
+                            ref={folderInputRef}
+                            id="directoryName"
+                            name="directoryName"
+                            defaultValue=""
+                            disabled={status.isLoading}
+                        />
+                        {inputError && (
+                            <div>
+                                <p className="text-xs text-red-600">{inputError}</p>
+                            </div>
+                        )}
+                    </div>
+                </form>
                 <DialogFooter>
                     <ButtonAction
                         Icon={LucideX}
@@ -109,11 +113,11 @@ export function AssetsFilesAddFolderButton(props: AssetsFilesAddFolderButtonProp
                         Icon={LucideCheck}
                         isLoading={status.isUninitialized || status.isLoading}
                         disabled={status.isError}
-                        type="button"
+                        type="submit"
                         size="sm"
                         variant="default"
                         label="Create"
-                        onClick={deleteFiles}
+                        onClick={addFolder}
                     />
                 </DialogFooter>
             </DialogContent>

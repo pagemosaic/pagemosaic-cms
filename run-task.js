@@ -24,7 +24,7 @@ const tasks = {
         title: 'The platform is being destroyed. This process may take around 5 to 10 minutes. Please wait for it to complete.',
         short: 'Destroying the platform',
         command: 'local-run turbo run destroy --filter=infra --no-color'
-    },
+    }
 };
 
 function printAddresses() {
@@ -49,31 +49,35 @@ function printAddresses() {
 }
 
 const runTask = async (taskName) => {
-    const command = tasks[taskName].command;
-    if (!command) {
-        console.error(`Task "${taskName}" not found.`);
-        process.exit(1);
-    }
-
-    const ora = await oraPromise;
-    const spinner = ora.default(tasks[taskName].title).start();
-
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            spinner.fail(`${command.short} failed: ${error.message}`);
-            console.error(stdout);
-            console.error(stderr);
+    if (taskName === 'print-addresses') {
+        printAddresses();
+    } else {
+        const command = tasks[taskName].command;
+        if (!command) {
+            console.error(`Task "${taskName}" not found.`);
             process.exit(1);
         }
-        if (stderr) {
-            spinner.warn(stderr);
-        }
-        spinner.succeed(`${tasks[taskName].short} completed successfully.`);
-        if (taskName === 'deploy-platform') {
-            printAddresses();
-        }
-        // console.log(stdout);
-    });
+
+        const ora = await oraPromise;
+        const spinner = ora.default(tasks[taskName].title).start();
+
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                spinner.fail(`${command.short} failed: ${error.message}`);
+                console.error(stdout);
+                console.error(stderr);
+                process.exit(1);
+            }
+            if (stderr) {
+                spinner.warn(stderr);
+            }
+            spinner.succeed(`${tasks[taskName].short} completed successfully.`);
+            if (taskName === 'deploy-platform') {
+                printAddresses();
+            }
+            // console.log(stdout);
+        });
+    }
 };
 
 const taskName = process.argv[2]; // Gets the task name from command-line arguments

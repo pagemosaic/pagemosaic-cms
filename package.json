@@ -21,6 +21,7 @@
     "deploy-platform": "node ./run-task.js build-platform && node ./run-task.js deploy-platform",
     "destroy-platform": "node ./run-task.js destroy-platform",
     "backup-platform": "local-run turbo run backup --filter=infra",
+    "print-addresses": "node ./run-task.js print-addresses",
     "api": "local-run turbo run dev --filter=api",
     "admin": "local-run turbo run dev --filter=admin"
   },
