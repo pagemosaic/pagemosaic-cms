@@ -577,10 +577,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                 className={cn('flex flex-col gap-4', {'pb-4': !collapsedBlocks[blockId]})}
                                                             >
                                                                 <div
-                                                                    className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent", {
+                                                                    className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent cursor-pointer", {
                                                                         'bg-slate-100': !isBlockEmpty,
                                                                         'bg-orange-100': isBlockEmpty
                                                                     })}
+                                                                    onClick={handleToggleBlock(blockId)}
                                                                 >
                                                                     <div
                                                                         className="flex flex-row gap-2 items-center justify-center flex-grow">
@@ -590,10 +591,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             onSelect={handleMoveBlock(blockIndex)}
                                                                             label={foundBlockClass.label}
                                                                         />
-                                                                        <p
-                                                                            className="text-sm text-muted-foreground font-medium line-clamp-1 cursor-pointer"
-                                                                            onClick={handleToggleBlock(blockId)}
-                                                                        >
+                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
                                                                             {foundBlockClass.label}
                                                                         </p>
                                                                         {collapsedBlocks[blockId]
@@ -621,7 +619,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             variant="outline"
                                                                             onClick={() => handleCopyBlock(blockIndex)}
                                                                         />
-                                                                        <div className="flex flex-row items-center">
+                                                                        <div
+                                                                            className="flex flex-row items-center"
+                                                                            onClick={e => { e.preventDefault(); e.stopPropagation(); }}
+                                                                        >
                                                                             <ContentDataBlockAddButton
                                                                                 blockRecords={selectedBlockClasses}
                                                                                 onSelect={(blockKey => handleAddNewBlock(blockKey, blockIndex, 1))}

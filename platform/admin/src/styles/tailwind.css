@@ -98,3 +98,7 @@
 .hover-target:hover + .show-element {
   display: block;
 }
+
+.content-field-help a {
+  @apply hover:underline text-blue-600
+}

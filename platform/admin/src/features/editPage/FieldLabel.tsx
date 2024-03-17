@@ -29,7 +29,7 @@ export function FieldLabel(props: FieldLabelProps) {
                         <ButtonAction Icon={LucideHelpCircle} variant="ghost" size="xxs" />
                     </PopoverTrigger>
                     <PopoverContent side="right" sideOffset={5} arrowPadding={20} className="w-80 bg-amber-50">
-                        <div className="text-sm" dangerouslySetInnerHTML={{__html: help}} />
+                        <div className="content-field-help text-sm" dangerouslySetInnerHTML={{__html: help}} />
                     </PopoverContent>
                 </Popover>
             )}

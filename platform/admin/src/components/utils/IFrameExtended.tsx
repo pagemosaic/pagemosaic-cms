@@ -61,6 +61,13 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
         }
     }, [frameWindow.current]);
 
+    const handleBeforeUnload = (event: any) => {
+        console.log('Reloading iframe: ');
+        event.preventDefault();
+        // Included for legacy support, e.g. Chrome/Edge < 119
+        event.returnValue = true;
+    };
+
     useEffect(() => {
         if (frameWindow.current) {
             handleWindowResize();
@@ -102,6 +109,8 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
     const loadSrcDoc = (srcDoc: string) => {
         if (frameWindow.current && frameWindow.current.contentWindow) {
             frameWindow.current.contentWindow.removeEventListener('resize', handleWindowResize);
+            // frameWindow.current.contentWindow.removeEventListener('beforeunload', handleBeforeUnload);
+
             const doc = frameWindow.current.contentWindow.document;
             if (doc) {
                 doc.open();
@@ -115,6 +124,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
             } else {
                 console.error('The iFrame\'s content window document is null.');
             }
+            // frameWindow.current.contentWindow.addEventListener('beforeunload', handleBeforeUnload);
             frameWindow.current.contentWindow.addEventListener('resize', handleWindowResize);
         }
     };

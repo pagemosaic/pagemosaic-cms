@@ -22,6 +22,8 @@ export function IndexPositionBadge(props: IndexPositionBadgeProps) {
 
 
     const handleSelect = (selectedIndex: number) => (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         onSelect(selectedIndex);
         setOpen(false);
     };

@@ -633,7 +633,10 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             variant="outline"
                                                                             onClick={() => handleCopyBlock(blockIndex)}
                                                                         />
-                                                                        <div className="flex flex-row items-center" onClick={e => e.preventDefault()}>
+                                                                        <div
+                                                                            className="flex flex-row items-center"
+                                                                            onClick={e => { e.preventDefault(); e.stopPropagation(); }}
+                                                                        >
                                                                             <ContentDataBlockAddButton
                                                                                 blockRecords={selectedBlockClasses}
                                                                                 onSelect={(blockKey => handleAddNewBlock(blockKey, blockIndex, 1))}
