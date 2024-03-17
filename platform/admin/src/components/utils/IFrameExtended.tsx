@@ -41,15 +41,17 @@ export type IFrameExtendedProps = RefAttributes<IFrameExtendedHandle> & {
     srcdoc?: string;
     zoomOut?: boolean;
     devMode?: boolean;
+    keepScrollPos?: boolean;
     onIFrameReady?: (url: string) => void;
     onIFrameMessage?: (data: any) => void;
 };
 
 const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((props, ref) => {
-    const {url, srcdoc, zoomOut, devMode = false} = props;
+    const {url, srcdoc, zoomOut, devMode = false, keepScrollPos = true} = props;
     const {value: scale = 0.8} = useSessionState<number>('iFrameScale');
 
     const frameWindow = useRef<HTMLIFrameElement>(null);
+    const scrollTopRef = useRef<number>(0);
 
     const handleWindowResize = useCallback(() => {
         if (frameWindow.current) {
@@ -61,12 +63,43 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
         }
     }, [frameWindow.current]);
 
-    const handleBeforeUnload = (event: any) => {
-        console.log('Reloading iframe: ');
-        event.preventDefault();
-        // Included for legacy support, e.g. Chrome/Edge < 119
-        event.returnValue = true;
+    const handleWindowScroll = () => {
+        if (frameWindow.current?.contentWindow) {
+            scrollTopRef.current = frameWindow.current.contentWindow?.document.documentElement.scrollTop || frameWindow.current.contentWindow?.document.body.scrollTop || 0;
+        }
     };
+
+    const handleLoad = () => {
+        if (frameWindow.current?.contentWindow) {
+            if (keepScrollPos) {
+                frameWindow.current.contentWindow.scrollTo({top: scrollTopRef.current});
+                frameWindow.current.contentWindow.addEventListener('scroll', handleWindowScroll);
+            } else {
+                frameWindow.current.contentWindow.scrollTo({top: 0});
+            }
+        }
+    };
+
+    const handleUnload = () => {
+        if (frameWindow.current?.contentWindow) {
+            if (keepScrollPos) {
+                frameWindow.current.contentWindow.removeEventListener('scroll', handleWindowScroll);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (frameWindow.current) {
+            frameWindow.current.addEventListener('load', handleLoad);
+            frameWindow.current.addEventListener('beforeunload', handleUnload);
+        }
+        return () => {
+            if (frameWindow.current) {
+                frameWindow.current.removeEventListener('beforeunload', handleUnload);
+                frameWindow.current.removeEventListener('load', handleLoad);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (frameWindow.current) {
@@ -85,7 +118,6 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
     const reloadPage = () => {
         if (frameWindow.current) {
             const url = frameWindow.current.src;
-            // this.frameWindow.current.src = '';
             setTimeout(() => {
                 if (frameWindow.current) {
                     frameWindow.current.src = url;
@@ -109,8 +141,6 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
     const loadSrcDoc = (srcDoc: string) => {
         if (frameWindow.current && frameWindow.current.contentWindow) {
             frameWindow.current.contentWindow.removeEventListener('resize', handleWindowResize);
-            // frameWindow.current.contentWindow.removeEventListener('beforeunload', handleBeforeUnload);
-
             const doc = frameWindow.current.contentWindow.document;
             if (doc) {
                 doc.open();
@@ -124,7 +154,6 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
             } else {
                 console.error('The iFrame\'s content window document is null.');
             }
-            // frameWindow.current.contentWindow.addEventListener('beforeunload', handleBeforeUnload);
             frameWindow.current.contentWindow.addEventListener('resize', handleWindowResize);
         }
     };
@@ -223,15 +252,15 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
     return (
         <div style={containerStyle}>
             {/*<div style={innerContainerStyle}>*/}
-                <iframe
-                    title="IFrame"
-                    ref={frameWindow}
-                    style={innerContainerStyle}
-                    src={url}
-                    srcDoc={srcdoc}
-                    allowFullScreen={true}
-                >
-                </iframe>
+            <iframe
+                title="IFrame"
+                ref={frameWindow}
+                style={innerContainerStyle}
+                src={url}
+                srcDoc={srcdoc}
+                allowFullScreen={true}
+            >
+            </iframe>
             {/*</div>*/}
         </div>
     );

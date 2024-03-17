@@ -63,6 +63,7 @@ export function PagePreviewPanel(props: PagePreviewPanelProps) {
                     ref={iFrameRef}
                     zoomOut={true}
                     devMode={true}
+                    keepScrollPos={false}
                     url="about:blank"
                     srcdoc={'<html><body><p style="padding: 2em">Loading...</p></body></html>'}
                 />

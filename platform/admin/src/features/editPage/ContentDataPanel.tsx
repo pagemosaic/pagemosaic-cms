@@ -8,7 +8,8 @@ import {
     LucidePlus,
     LucideChevronDown,
     LucideAlertTriangle,
-    LucideCopy, LucideChevronUp
+    LucideCopy,
+    LucideChevronRight
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -78,6 +79,10 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         value: collapsedBlocks = {},
         saveValue: setCollapsedBlocks
     } = useSessionState<Record<string, Record<string, boolean>>>('pageContentCollapsedBlocks');
+    const {
+        value: collapsedFields = {},
+        saveValue: setCollapsedFields
+    } = useSessionState<Record<string, Record<string, boolean>>>('pageContentCollapsedFields');
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -165,12 +170,17 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
     }
 
     const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
-        console.log('handleToggleBlock');
         e.stopPropagation();
         e.preventDefault();
         let pageCollapsedBlocks = collapsedBlocks[pageId] || {};
         pageCollapsedBlocks[blockKey] = !pageCollapsedBlocks[blockKey];
         setCollapsedBlocks({...collapsedBlocks, [pageId]: pageCollapsedBlocks});
+    };
+
+    const handleToggleField = (fieldKey: string) => () => {
+        let pageCollapsedFields = collapsedFields[pageId] || {};
+        pageCollapsedFields[fieldKey] = !pageCollapsedFields[fieldKey];
+        setCollapsedFields({...collapsedFields, [pageId]: pageCollapsedFields});
     };
 
     const handleContentDataChange = (newContentData: ContentData, doRefresh?: boolean) => {
@@ -382,6 +392,8 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         );
     };
 
+    const pageCollapsedFields = collapsedFields[pageId] || {};
+
     const renderField = (
         fieldClass: ContentDataFieldClass,
         fieldPath: string,
@@ -417,14 +429,17 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                 );
             } else {
                 return fieldsContents.map((fieldContent, fieldContentIndex) => {
+                    const fieldKey = `${fieldPath}.${fieldContentIndex}`;
                     return (
                         <div key={`field_${fieldClass.key}_${fieldContentIndex}`} className="flex flex-col gap-2">
                             <div
                                 className="relative flex flex-row gap-2 items-center justify-between pr-2">
                                 <FieldLabel
                                     label={fieldClass.label}
-                                    field={`${fieldPath}.${fieldContentIndex}`}
+                                    field={fieldKey}
                                     help={fieldClass.help}
+                                    composite={fieldClass.type === 'composite'}
+                                    collapsed={pageCollapsedFields[fieldKey]}
                                     className="bg-white z-20 pr-2"
                                     controls={
                                         <IndexPositionBadge
@@ -435,6 +450,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                         />
                                     }
                                     nested={nested}
+                                    onToggle={handleToggleField(fieldKey)}
                                 />
                                 <div className="static flex flex-row gap-2 items-center hover-target">
                                     <ButtonAction
@@ -453,7 +469,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                 <div
                                     className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[60px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                             </div>
-                            {renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
+                            {!pageCollapsedFields[fieldKey] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
                         </div>
                     );
                 });
@@ -461,8 +477,16 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         } else {
             return (
                 <div key={`field_${fieldClass.key}`} className="flex flex-col gap-2">
-                    <FieldLabel label={fieldClass.label} field={fieldPath} help={fieldClass.help} nested={nested}/>
-                    {renderControl(fieldClass, fieldPath)}
+                    <FieldLabel
+                        label={fieldClass.label}
+                        field={fieldPath}
+                        help={fieldClass.help}
+                        nested={nested}
+                        composite={fieldClass.type === 'composite'}
+                        collapsed={pageCollapsedFields[fieldPath]}
+                        onToggle={handleToggleField(fieldPath)}
+                    />
+                    {!pageCollapsedFields[fieldPath] && renderControl(fieldClass, fieldPath)}
                 </div>
             );
         }
@@ -545,14 +569,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                         })}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
-                                <TooltipWrapper delayDuration={700} text="Modify the configuration of the data fields.">
-                                    <ButtonAction
-                                        size="sm"
-                                        variant="ghost"
-                                        Icon={LucideSettings}
-                                        onClick={() => setDataConfigMode(true)}
-                                    />
-                                </TooltipWrapper>
+                                <ButtonAction
+                                    size="sm"
+                                    variant="ghost"
+                                    title="Modify the configuration of the data fields"
+                                    Icon={LucideSettings}
+                                    onClick={() => setDataConfigMode(true)}
+                                />
                             </div>
                         </CardContent>
                         <div className="flex-grow relative h-full">
@@ -597,21 +620,20 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                     })}
                                                                     onClick={handleToggleBlock(blockId)}
                                                                 >
-                                                                    <div
-                                                                        className="flex flex-row gap-2 items-center justify-center flex-grow">
+                                                                    <div className="flex flex-row gap-2 items-center justify-center flex-grow">
+                                                                        {pageCollapsedBlocks[blockId]
+                                                                            ? (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
+                                                                            : (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                        }
+                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
+                                                                            {foundBlockClass.label}
+                                                                        </p>
                                                                         <IndexPositionBadge
                                                                             index={blockIndex}
                                                                             length={groupedContentData.length}
                                                                             onSelect={handleMoveBlock(blockIndex)}
                                                                             label={foundBlockClass.label}
                                                                         />
-                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
-                                                                            {foundBlockClass.label}
-                                                                        </p>
-                                                                        {pageCollapsedBlocks[blockId]
-                                                                            ? (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
-                                                                            : (<LucideChevronUp className="text-muted-foreground w-4 h-4" />)
-                                                                        }
                                                                         {isBlockEmpty && (
                                                                             <TooltipWrapper
                                                                                 text="All block fields are empty!">

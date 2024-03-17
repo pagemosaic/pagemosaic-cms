@@ -7,7 +7,9 @@ import {
     LucideMinus,
     LucidePlus,
     LucideChevronDown,
-    LucideCopy, LucideChevronUp, LucideAlertTriangle
+    LucideCopy,
+    LucideAlertTriangle,
+    LucideChevronRight
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -74,6 +76,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         value: collapsedBlocks = {},
         saveValue: setCollapsedBlocks
     } = useSessionState<Record<string, boolean>>('siteContentCollapsedBlocks');
+    const {
+        value: collapsedFields = {},
+        saveValue: setCollapsedFields
+    } = useSessionState<Record<string, boolean>>('siteContentCollapsedFields');
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -159,6 +165,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         e.stopPropagation();
         e.preventDefault();
         setCollapsedBlocks({...collapsedBlocks, [blockKey]: !collapsedBlocks[blockKey]});
+    };
+
+    const handleToggleField = (fieldKey: string) => () => {
+        setCollapsedFields({...collapsedFields, [fieldKey]: !collapsedFields[fieldKey]});
     };
 
     const handleContentDataChange = (newContentData: ContentData, doRefresh?: boolean) => {
@@ -405,14 +415,17 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 );
             } else {
                 return fieldsContents.map((fieldContent, fieldContentIndex) => {
+                    const fieldKey = `${fieldPath}.${fieldContentIndex}`;
                     return (
                         <div key={`field_${fieldClass.key}_${fieldContentIndex}`} className="flex flex-col gap-2">
                             <div
                                 className="relative flex flex-row gap-2 items-center justify-between pr-2">
                                 <FieldLabel
                                     label={fieldClass.label}
-                                    field={`${fieldPath}.${fieldContentIndex}`}
+                                    field={fieldKey}
                                     help={fieldClass.help}
+                                    composite={fieldClass.type === 'composite'}
+                                    collapsed={collapsedFields[fieldKey]}
                                     className="bg-white z-20 pr-2"
                                     controls={
                                         <IndexPositionBadge
@@ -423,6 +436,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                         />
                                     }
                                     nested={nested}
+                                    onToggle={handleToggleField(fieldKey)}
                                 />
                                 <div className="flex flex-row gap-2 items-center hover-target">
                                     <ButtonAction
@@ -441,7 +455,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                 <div
                                     className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[60px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                             </div>
-                            {renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
+                            {!collapsedFields[fieldKey] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
                         </div>
                     );
                 });
@@ -449,8 +463,16 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         } else {
             return (
                 <div key={`field_${fieldClass.key}`} className="flex flex-col gap-2">
-                    <FieldLabel label={fieldClass.label} field={fieldPath} help={fieldClass.help} nested={nested}/>
-                    {renderControl(fieldClass, fieldPath)}
+                    <FieldLabel
+                        label={fieldClass.label}
+                        field={fieldPath}
+                        help={fieldClass.help}
+                        nested={nested}
+                        composite={fieldClass.type === 'composite'}
+                        collapsed={collapsedFields[fieldPath]}
+                        onToggle={handleToggleField(fieldPath)}
+                    />
+                    {!collapsedFields[fieldPath] && renderControl(fieldClass, fieldPath)}
                 </div>
             );
         }
@@ -583,21 +605,20 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                     })}
                                                                     onClick={handleToggleBlock(blockId)}
                                                                 >
-                                                                    <div
-                                                                        className="flex flex-row gap-2 items-center justify-center flex-grow">
+                                                                    <div className="flex flex-row gap-2 items-center justify-center flex-grow">
+                                                                        {collapsedBlocks[blockId]
+                                                                            ? (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
+                                                                            : (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                        }
+                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
+                                                                            {foundBlockClass.label}
+                                                                        </p>
                                                                         <IndexPositionBadge
                                                                             index={blockIndex}
                                                                             length={groupedContentData.length}
                                                                             onSelect={handleMoveBlock(blockIndex)}
                                                                             label={foundBlockClass.label}
                                                                         />
-                                                                        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
-                                                                            {foundBlockClass.label}
-                                                                        </p>
-                                                                        {collapsedBlocks[blockId]
-                                                                            ? (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
-                                                                            : (<LucideChevronUp className="text-muted-foreground w-4 h-4" />)
-                                                                        }
                                                                         {isBlockEmpty && (
                                                                             <TooltipWrapper
                                                                                 text="All block fields are empty!">
