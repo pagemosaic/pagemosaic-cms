@@ -23,7 +23,7 @@ export function WebsiteTemplateCard(props: WebsiteTemplateCardProps) {
                         <img
                             src={attrs.imageUrl || imagePlaceholder}
                             alt={'Unknown'}
-                            className="h-auto w-auto object-cover object-top aspect-square"
+                            className="h-full w-full object-cover object-top aspect-square"
                         />
                     </div>
                     <div className="w-full flex flex-col gap-2 justify-between">

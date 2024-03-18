@@ -68,7 +68,7 @@ export function MetaImage(props: MetaImageProps) {
                         ref={imageElementRef}
                         src={validImageSrc}
                         alt={'Unknown'}
-                        className="h-auto w-auto object-cover object-top aspect-square"
+                        className="h-full w-full object-cover object-top aspect-square"
                         onLoad={handleImageLoadingSuccess}
                         onError={handleImageLoadingError}
                     />

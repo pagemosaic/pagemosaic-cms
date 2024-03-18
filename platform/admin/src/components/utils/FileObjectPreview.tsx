@@ -32,7 +32,7 @@ export function FileObjectPreview(props: FileObjectPreviewProps) {
                         <img
                             src={fileObject.defaultUrl}
                             alt={'Unknown'}
-                            className="h-auto w-auto object-cover object-top aspect-square"
+                            className="h-full w-full object-cover object-top aspect-square"
                         />
                     </div>
                 </PopoverContent>

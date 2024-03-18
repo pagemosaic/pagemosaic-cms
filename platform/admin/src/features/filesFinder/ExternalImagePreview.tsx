@@ -62,7 +62,7 @@ export function ExternalImagePreview(props: ExternalImagePreviewProps) {
                         ref={imageElementRef}
                         // src={imageElementRef.current?.src}
                         alt={'Unknown'}
-                        className="h-auto w-auto object-cover object-center aspect-square"
+                        className="h-full w-full object-cover object-center aspect-square"
                         onLoad={handleImageLoadingSuccess}
                         onError={handleImageLoadingError}
                     />

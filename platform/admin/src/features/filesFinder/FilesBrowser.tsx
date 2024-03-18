@@ -169,7 +169,7 @@ export function FilesBrowser(props: FilesBrowserProps) {
                                                                         <img
                                                                             src={treeNode.fileObject.defaultUrl}
                                                                             alt={treeNode.name}
-                                                                            className="h-auto w-auto object-cover object-top aspect-square cursor-pointer"
+                                                                            className="h-full w-full object-cover object-top aspect-square cursor-pointer"
                                                                             onClick={handleSelectItem(treeNode.fileObject.url)}
                                                                         />
                                                                     </div>

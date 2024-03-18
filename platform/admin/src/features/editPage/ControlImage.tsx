@@ -103,7 +103,7 @@ export function ControlImage(props: ControlImageProps) {
                         ref={imageElementRef}
                         src={validImageSrc}
                         alt={'Unknown'}
-                        className="h-auto w-auto object-cover object-top aspect-square"
+                        className="w-full h-full object-cover object-top aspect-square"
                         onLoad={handleImageLoadingSuccess}
                         onError={handleImageLoadingError}
                     />
