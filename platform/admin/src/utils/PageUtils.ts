@@ -17,20 +17,55 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
             contentDataBlockClass.fields.forEach(fieldConfig => {
                 const fieldPath = `${index}.fields.${fieldConfig.key}`;
                 let fieldValue = get(existingObject, fieldPath, undefined) as ContentDataField | Array<ContentDataField> | undefined;
-
-                if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
-                    fieldConfig.nested.forEach((nestedFieldConfig) => {
-                        const nestedFieldPath = `${fieldPath}.nested.${nestedFieldConfig.key}`;
-                        let nestedFieldValue = get(existingObject, nestedFieldPath, {});
-                        set(newBlockData, `fields.${fieldConfig.key}.nested.${nestedFieldConfig.key}`, nestedFieldValue);
-                    });
+                let newFieldValue: ContentDataField | Array<ContentDataField> = {};
+                if (fieldConfig.isArray) {
+                    newFieldValue = [];
+                    if (fieldValue !== undefined && Array.isArray(fieldValue) && fieldValue.length > 0) {
+                        for (let fieldValueIndex = 0; fieldValueIndex < fieldValue.length; fieldValueIndex++) {
+                            const fieldValueItem = fieldValue[fieldValueIndex];
+                            let newFieldValueItem: ContentDataField | Array<ContentDataField> = {};
+                            if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                                fieldConfig.nested.forEach((nestedFieldConfig) => {
+                                    const nestedFieldPath = `nested.${nestedFieldConfig.key}`;
+                                    let nestedFieldValueItem = get(fieldValueItem, nestedFieldPath, undefined)  as ContentDataField | Array<ContentDataField> | undefined;
+                                    if (nestedFieldConfig.isArray)  {
+                                        if (nestedFieldValueItem !== undefined && Array.isArray(nestedFieldValueItem) && nestedFieldValueItem.length > 0) {
+                                            for (let nestedFieldValueIndex = 0; nestedFieldValueIndex < nestedFieldValueItem.length; nestedFieldValueIndex++) {
+                                                set(newFieldValueItem, `${nestedFieldPath}.${nestedFieldValueIndex}`, nestedFieldValueItem[nestedFieldValueIndex] || {});
+                                            }
+                                        }
+                                    } else {
+                                        set(newFieldValueItem, nestedFieldPath, nestedFieldValueItem || {});
+                                    }
+                                });
+                            } else {
+                                newFieldValueItem = fieldValueItem;
+                            }
+                            newFieldValue[fieldValueIndex] = newFieldValueItem;
+                        }
+                    }
+                } else {
+                    if (fieldValue !== undefined) {
+                        if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                            fieldConfig.nested.forEach((nestedFieldConfig) => {
+                                const nestedFieldPath = `nested.${nestedFieldConfig.key}`;
+                                let nestedFieldValue = get(fieldValue, nestedFieldPath, undefined)  as ContentDataField | Array<ContentDataField> | undefined;
+                                if (nestedFieldConfig.isArray)  {
+                                    if (nestedFieldValue !== undefined && Array.isArray(nestedFieldValue) && nestedFieldValue.length > 0) {
+                                        for (let nestedFieldValueIndex = 0; nestedFieldValueIndex < nestedFieldValue.length; nestedFieldValueIndex++) {
+                                            set(newFieldValue, `${nestedFieldPath}.${nestedFieldValueIndex}`, nestedFieldValue[nestedFieldValueIndex] || {});
+                                        }
+                                    }
+                                } else {
+                                    set(newFieldValue, nestedFieldPath, nestedFieldValue || {});
+                                }
+                            });
+                        } else {
+                            newFieldValue = fieldValue;
+                        }
+                    }
                 }
-
-                if (fieldValue === undefined || fieldConfig.isArray !== Array.isArray(fieldValue)) {
-                    fieldValue = fieldConfig.isArray ? [] : {};
-                }
-
-                set(newBlockData, `fields.${fieldConfig.key}`, fieldValue);
+                set(newBlockData, `fields.${fieldConfig.key}`, newFieldValue);
             });
             result.push(newBlockData);
         }

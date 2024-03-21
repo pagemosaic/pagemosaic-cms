@@ -139,6 +139,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
     }
     try {
         contentData = JSON.parse(Content?.PageContentData.S);
+        console.log('Content Data: ', contentData);
     } catch (e: any) {
         contentDataError = 'Error parsing the content data values.';
     }
