@@ -59,7 +59,19 @@ const useFieldTemplateMap: Record<typeof ContentDataFieldTypes[number], Template
     'composite': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
         if (fieldClass.nested) {
             let result = `{% assign ${fieldClass.key} = ${pathPrefix}.${fieldClass.key} %}\n`;
-            result += '<!-- get nested field -->\n';
+            if (fieldClass.nestedSets && fieldClass.nestedSets.length > 0) {
+                for (const nestedSet of fieldClass.nestedSets) {
+                    result += `{% if ${fieldClass.key}.nestedSetCode == '${nestedSet.nestedCode}' %}\n`;
+                    for (const nestedFieldClass of fieldClass.nested) {
+                        if (nestedFieldClass.nestedSetCodes && nestedFieldClass.nestedSetCodes.includes(nestedSet.nestedCode)) {
+                            result += `\t\t <!-- ${nestedFieldClass.label} -->\n`;
+                        }
+                    }
+                    result += `{% endif %}\n`;
+                }
+            } else {
+                result += '<!-- get any nested field -->\n';
+            }
             return result;
         }
         return '';
@@ -93,7 +105,19 @@ const useFieldArrayTemplateMap: Record<typeof ContentDataFieldTypes[number], Tem
     'composite': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
         if (fieldClass.nested) {
             let result = `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n`;
-            result += '\t<!-- get nested field -->\n';
+            if (fieldClass.nestedSets && fieldClass.nestedSets.length > 0) {
+                for (const nestedSet of fieldClass.nestedSets) {
+                    result += `\t{% if ${fieldClass.key}.nestedSetCode == '${nestedSet.nestedCode}' %}\n`;
+                    for (const nestedFieldClass of fieldClass.nested) {
+                        if (nestedFieldClass.nestedSetCodes && nestedFieldClass.nestedSetCodes.includes(nestedSet.nestedCode)) {
+                            result += `\t\t <!-- ${nestedFieldClass.label} -->\n`;
+                        }
+                    }
+                    result += `\t{% endif %}\n`;
+                }
+            } else {
+                result += '\t<!-- get nested field -->\n';
+            }
             result += '{% endfor %}';
             return result;
         }

@@ -48,8 +48,9 @@ import {Button} from '@/components/ui/button';
 import {ContentDataBlockAddButton} from '@/features/editPage/ContentDataBlockAddButton';
 import {useHelpSheet} from '@/features/helpSheet/HelpSheetProvider';
 import {ControlStringWithVariants} from '@/features/editPage/ControlStringWithVariants';
-import {FieldLabel} from './FieldLabel';
 import {useHistoryData} from '@/features/editPage/HistoryDataProvider';
+import {ControlNestedSetSelect} from '@/features/editPage/ControlNestedSetSelect';
+import {FieldLabel} from './FieldLabel';
 
 interface SiteContentDataPanelProps {
     siteSessionStateKey: string;
@@ -192,7 +193,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 key: code,
                 fields: {}
             });
-            SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
+            const newContentData: ContentData = buildOrUpdateContentObject(
+                contentDataConfigClass,
+                prevContentData
+            );
+            SiteContent.SiteContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
@@ -263,9 +268,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
             const fieldContentData: Array<ContentDataField> = get(prevContentData, fieldPath, []);
-            fieldContentData.splice(fieldIndex, 0, {stringValue: ''});
+            fieldContentData.splice(fieldIndex, 0, {});
             set(prevContentData, fieldPath, fieldContentData);
-            SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
+            const newContentData: ContentData = buildOrUpdateContentObject(
+                contentDataConfigClass,
+                prevContentData
+            );
+            SiteContent.SiteContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
@@ -310,8 +319,14 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         fieldClass: ContentDataFieldClass,
         fieldPath: string,
     ) => {
+        const isCompositeControl = fieldClass.type === 'composite' && fieldClass.nested;
+        const isWithNestedSets = fieldClass.nestedSets && fieldClass.nestedSets.length;
+        let nestedSetCode: string | undefined = undefined;
+        if (isWithNestedSets) {
+            nestedSetCode = get(contentData, `${fieldPath}.nestedSetCode`);
+        }
         return (
-            <div className="ml-3 flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
                 {fieldClass.type === 'string' && !fieldClass.variants && (
                     <ControlString
                         key={fieldPath}
@@ -364,11 +379,26 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                         onChange={handleContentDataChange}
                     />
                 )}
-                {fieldClass.type === 'composite' && fieldClass.nested && (
+                {isCompositeControl && (
                     <div className="py-2 pl-6 flex flex-col gap-6 border-l-[2px] border-slate-300 border-dotted">
-                        {fieldClass.nested.map((nestedFieldClass: ContentDataFieldClass) => {
+                        {isWithNestedSets && (
+                            <div className="flex flex-row items-center relative">
+                                <span
+                                    className="absolute -left-[24px] top-[calc(50%-1px)] w-[20px] border-t-[2px] border-dotted border-slate-300"/>
+                                <ControlNestedSetSelect
+                                    key={fieldPath}
+                                    controlKey={pageContentUniqueKey}
+                                    contentData={contentData}
+                                    fieldClass={fieldClass}
+                                    fieldPath={fieldPath}
+                                    disabled={isInAction}
+                                    onChange={handleContentDataChange}
+                                />
+                            </div>
+                        )}
+                        {fieldClass.nested?.map((nestedFieldClass: ContentDataFieldClass) => {
                             const nestedFieldPath = `${fieldPath}.nested.${nestedFieldClass.key}`;
-                            return renderField(nestedFieldClass, nestedFieldPath, true);
+                            return renderField(nestedFieldClass, nestedFieldPath, true, nestedSetCode);
                         })}
                     </div>
                 )}
@@ -383,8 +413,14 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
     const renderField = (
         fieldClass: ContentDataFieldClass,
         fieldPath: string,
-        nested?: boolean
+        nested?: boolean,
+        nestedSetCode?: string,
     ) => {
+        if (nestedSetCode && fieldClass.nestedSetCodes) {
+            if (!fieldClass.nestedSetCodes.includes(nestedSetCode)) {
+                return null;
+            }
+        }
         const isFieldArray = !!fieldClass.isArray;
         if (isFieldArray) {
             const fieldsContents: Array<ContentDataField> = get(contentData, fieldPath, []) as Array<ContentDataField>;
@@ -605,10 +641,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                     })}
                                                                     onClick={handleToggleBlock(blockId)}
                                                                 >
-                                                                    <div className="flex flex-row gap-2 items-center justify-center flex-grow">
+                                                                    <div
+                                                                        className="flex flex-row gap-2 items-center justify-center flex-grow">
                                                                         {collapsedBlocks[blockId]
-                                                                            ? (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
-                                                                            : (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                            ? (<LucideChevronRight
+                                                                                className="text-muted-foreground w-4 h-4"/>)
+                                                                            : (<LucideChevronDown
+                                                                                className="text-muted-foreground w-4 h-4"/>)
                                                                         }
                                                                         <p className="text-sm text-muted-foreground font-medium line-clamp-1">
                                                                             {foundBlockClass.label}
@@ -627,7 +666,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             </TooltipWrapper>
                                                                         )}
                                                                     </div>
-                                                                    <div className="flex flex-row gap-2 items-center">
+                                                                    <div
+                                                                        className="flex flex-row gap-2 items-center"
+                                                                        onClick={e => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                        }}
+                                                                    >
                                                                         <ButtonAction
                                                                             Icon={LucideMinus}
                                                                             size="xxs"
@@ -640,10 +685,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             variant="outline"
                                                                             onClick={() => handleCopyBlock(blockIndex)}
                                                                         />
-                                                                        <div
-                                                                            className="flex flex-row items-center"
-                                                                            onClick={e => { e.preventDefault(); e.stopPropagation(); }}
-                                                                        >
+                                                                        <div className="flex flex-row items-center">
                                                                             <ContentDataBlockAddButton
                                                                                 blockRecords={selectedBlockClasses}
                                                                                 onSelect={(blockKey => handleAddNewBlock(blockKey, blockIndex, 1))}

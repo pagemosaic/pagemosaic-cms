@@ -49,8 +49,9 @@ import {getIdFromPK} from 'infra-common/utility/database';
 import {ContentDataBlockAddButton} from '@/features/editPage/ContentDataBlockAddButton';
 import {useHelpSheet} from '@/features/helpSheet/HelpSheetProvider';
 import {ControlStringWithVariants} from '@/features/editPage/ControlStringWithVariants';
-import {FieldLabel} from './FieldLabel';
 import {useHistoryData} from '@/features/editPage/HistoryDataProvider';
+import {ControlNestedSetSelect} from '@/features/editPage/ControlNestedSetSelect';
+import {FieldLabel} from './FieldLabel';
 
 interface ContentDataPanelProps {
     pageSessionStateKey: string;
@@ -139,7 +140,6 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
     }
     try {
         contentData = JSON.parse(Content?.PageContentData.S);
-        console.log('Content Data: ', contentData);
     } catch (e: any) {
         contentDataError = 'Error parsing the content data values.';
     }
@@ -205,7 +205,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                 key: code,
                 fields: {}
             });
-            Content.PageContentData.S = JSON.stringify(prevContentData);
+            const newContentData: ContentData = buildOrUpdateContentObject(
+                contentDataConfigClass,
+                prevContentData
+            );
+            Content.PageContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
@@ -276,9 +280,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             putIntoHistory({pageEntry});
             const prevContentData = JSON.parse(Content?.PageContentData.S);
             const fieldContentData: Array<ContentDataField> = get(prevContentData, fieldPath, []);
-            fieldContentData.splice(fieldIndex, 0, {stringValue: ''});
+            fieldContentData.splice(fieldIndex, 0, {});
             set(prevContentData, fieldPath, fieldContentData);
-            Content.PageContentData.S = JSON.stringify(prevContentData);
+            const newContentData: ContentData = buildOrUpdateContentObject(
+                contentDataConfigClass,
+                prevContentData
+            );
+            Content.PageContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
@@ -323,6 +331,12 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         fieldClass: ContentDataFieldClass,
         fieldPath: string,
     ) => {
+        const isCompositeControl = fieldClass.type === 'composite' && fieldClass.nested;
+        const isWithNestedSets = fieldClass.nestedSets && fieldClass.nestedSets.length;
+        let nestedSetCode: string | undefined = undefined;
+        if (isWithNestedSets) {
+            nestedSetCode = get(contentData, `${fieldPath}.nestedSetCode`);
+        }
         return (
             <div className="flex flex-col gap-2">
                 {fieldClass.type === 'string' && !fieldClass.variants && (
@@ -377,11 +391,26 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                         onChange={handleContentDataChange}
                     />
                 )}
-                {fieldClass.type === 'composite' && fieldClass.nested && (
+                {isCompositeControl && (
                     <div className="py-2 pl-6 flex flex-col gap-6 border-l-[2px] border-slate-300 border-dotted">
-                        {fieldClass.nested.map((nestedFieldClass: ContentDataFieldClass) => {
+                        {isWithNestedSets && (
+                            <div className="flex flex-row items-center relative">
+                                <span
+                                    className="absolute -left-[24px] top-[calc(50%-1px)] w-[20px] border-t-[2px] border-dotted border-slate-300"/>
+                                <ControlNestedSetSelect
+                                    key={fieldPath}
+                                    controlKey={pageContentUniqueKey}
+                                    contentData={contentData}
+                                    fieldClass={fieldClass}
+                                    fieldPath={fieldPath}
+                                    disabled={isInAction}
+                                    onChange={handleContentDataChange}
+                                />
+                            </div>
+                        )}
+                        {fieldClass.nested?.map((nestedFieldClass: ContentDataFieldClass) => {
                             const nestedFieldPath = `${fieldPath}.nested.${nestedFieldClass.key}`;
-                            return renderField(nestedFieldClass, nestedFieldPath, true);
+                            return renderField(nestedFieldClass, nestedFieldPath, true, nestedSetCode);
                         })}
                     </div>
                 )}
@@ -399,7 +428,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         fieldClass: ContentDataFieldClass,
         fieldPath: string,
         nested?: boolean,
+        nestedSetCode?: string,
     ) => {
+        if (nestedSetCode && fieldClass.nestedSetCodes) {
+            if (!fieldClass.nestedSetCodes.includes(nestedSetCode)) {
+                return null;
+            }
+        }
         const isFieldArray = !!fieldClass.isArray;
         if (isFieldArray) {
             const fieldsContents: Array<ContentDataField> = get(contentData, fieldPath, []) as Array<ContentDataField>;
@@ -643,7 +678,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             </TooltipWrapper>
                                                                         )}
                                                                     </div>
-                                                                    <div className="flex flex-row gap-2 items-center">
+                                                                    <div
+                                                                        className="flex flex-row gap-2 items-center"
+                                                                        onClick={e => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                        }}
+                                                                    >
                                                                         <ButtonAction
                                                                             Icon={LucideMinus}
                                                                             size="xxs"
@@ -656,10 +697,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             variant="outline"
                                                                             onClick={() => handleCopyBlock(blockIndex)}
                                                                         />
-                                                                        <div
-                                                                            className="flex flex-row items-center"
-                                                                            onClick={e => { e.preventDefault(); e.stopPropagation(); }}
-                                                                        >
+                                                                        <div className="flex flex-row items-center">
                                                                             <ContentDataBlockAddButton
                                                                                 blockRecords={selectedBlockClasses}
                                                                                 onSelect={(blockKey => handleAddNewBlock(blockKey, blockIndex, 1))}

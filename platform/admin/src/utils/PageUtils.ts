@@ -1,7 +1,19 @@
 import set from 'lodash-es/set';
 import get from 'lodash-es/get';
-import {ContentDataConfigClass, ContentDataBlockClass} from 'infra-common/data/ContentDataConfig';
+import {
+    ContentDataConfigClass,
+    ContentDataBlockClass,
+    ContentDataFieldClass
+} from 'infra-common/data/ContentDataConfig';
 import {ContentData, ContentDataField, ContentDataBlock} from 'infra-common/data/ContentData';
+
+export function initField(fieldValue: ContentDataField | undefined, fieldClass: ContentDataFieldClass): ContentDataField {
+    let result = fieldValue || {};
+    if (fieldClass.type === 'composite' && fieldClass.nestedSets && fieldClass.nestedSets.length > 0) {
+        result.nestedSetCode = fieldClass.nestedSets[0].nestedCode;
+    }
+    return result;
+}
 
 export function buildOrUpdateContentObject(config: ContentDataConfigClass, existingObject: ContentData = []): ContentData {
     const result: ContentData = [];
@@ -23,11 +35,14 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
                     if (fieldValue !== undefined && Array.isArray(fieldValue) && fieldValue.length > 0) {
                         for (let fieldValueIndex = 0; fieldValueIndex < fieldValue.length; fieldValueIndex++) {
                             const fieldValueItem = fieldValue[fieldValueIndex];
-                            let newFieldValueItem: ContentDataField | Array<ContentDataField> = {};
+                            let newFieldValueItem: ContentDataField = {};
                             if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                                if (fieldConfig.nestedSets && fieldConfig.nestedSets.length > 0) {
+                                    newFieldValueItem.nestedSetCode = fieldValueItem.nestedSetCode || fieldConfig.nestedSets[0].nestedCode;
+                                }
                                 fieldConfig.nested.forEach((nestedFieldConfig) => {
                                     const nestedFieldPath = `nested.${nestedFieldConfig.key}`;
-                                    let nestedFieldValueItem = get(fieldValueItem, nestedFieldPath, undefined)  as ContentDataField | Array<ContentDataField> | undefined;
+                                    let nestedFieldValueItem = get(fieldValueItem, nestedFieldPath, undefined)  as ContentDataField | undefined;
                                     if (nestedFieldConfig.isArray)  {
                                         if (nestedFieldValueItem !== undefined && Array.isArray(nestedFieldValueItem) && nestedFieldValueItem.length > 0) {
                                             for (let nestedFieldValueIndex = 0; nestedFieldValueIndex < nestedFieldValueItem.length; nestedFieldValueIndex++) {
@@ -47,6 +62,9 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
                 } else {
                     if (fieldValue !== undefined) {
                         if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                            if (fieldConfig.nestedSets && fieldConfig.nestedSets.length > 0) {
+                                newFieldValue.nestedSetCode = (fieldValue as ContentDataField).nestedSetCode || fieldConfig.nestedSets[0].nestedCode;
+                            }
                             fieldConfig.nested.forEach((nestedFieldConfig) => {
                                 const nestedFieldPath = `nested.${nestedFieldConfig.key}`;
                                 let nestedFieldValue = get(fieldValue, nestedFieldPath, undefined)  as ContentDataField | Array<ContentDataField> | undefined;
@@ -62,6 +80,12 @@ export function buildOrUpdateContentObject(config: ContentDataConfigClass, exist
                             });
                         } else {
                             newFieldValue = fieldValue;
+                        }
+                    } else {
+                        if (fieldConfig.type === 'composite' && fieldConfig.nested && fieldConfig.nested.length > 0) {
+                            if (fieldConfig.nestedSets && fieldConfig.nestedSets.length > 0) {
+                                newFieldValue.nestedSetCode = fieldConfig.nestedSets[0].nestedCode;
+                            }
                         }
                     }
                 }
@@ -93,7 +117,14 @@ export function isContentDataBlockEmpty(contentDataBlock: ContentDataBlock): boo
         } else {
             if (value.nested) {
                 for (const nestedKey in value.nested) {
-                    if (!isFieldEmpty(value.nested[nestedKey])) {
+                    const nestedValue = value.nested[nestedKey];
+                    if (Array.isArray(nestedValue)) {
+                        for (const nestedItem of nestedValue) {
+                            if (!isFieldEmpty(nestedItem)) {
+                                return false;
+                            }
+                        }
+                    } else if (!isFieldEmpty(nestedValue)) {
                         return false;
                     }
                 }
