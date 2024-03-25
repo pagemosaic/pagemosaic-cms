@@ -1,12 +1,13 @@
-import { Readable } from 'stream';
+import {Readable} from 'stream';
 import {
     S3Client,
     ListObjectsV2Command,
     PutObjectCommand,
     DeleteObjectsCommand,
-    GetObjectCommand
+    GetObjectCommand,
+    HeadObjectCommand
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {FileObject, BucketParams} from '../system/Bucket';
 
 const AWS_REGION: string | undefined = process.env.AWS_REGION;
@@ -36,7 +37,7 @@ export async function getFilesInDirectory(
     let isTruncated: boolean = true;
     const files: Array<FileObject> = [];
     while (isTruncated) {
-        const { Contents, IsTruncated, NextContinuationToken } = await client.send(command);
+        const {Contents, IsTruncated, NextContinuationToken} = await client.send(command);
         if (Contents) {
             for (const contentItem of Contents) {
                 const {Key, Size, LastModified} = contentItem;
@@ -57,21 +58,46 @@ export async function getFilesInDirectory(
     return files;
 }
 
-export async function getUploadUrlForFile(bucketName: string, fileKey: string): Promise<string> {
-    const client = getS3Client();
-    const command = new PutObjectCommand({
-        Bucket: bucketName,
-        Key: fileKey,
-        // Metadata: {
-        //     'Cache-Control': 'max-age=86400'
-        // }
-    });
+export async function shouldUpload(bucketName: string, fileKey: string, contentHash: string) {
+    try {
+        const client = getS3Client();
+        const command = new HeadObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey
+        });
+        const response = await client.send(command);
+        const s3ContentHash = response.Metadata ? response.Metadata['content-hash'] : '';
+        return s3ContentHash !== contentHash;
+    } catch (error: any) {
+        if (error.name === 'NotFound') {
+            // The object does not exist, so upload is necessary
+            return true;
+        }
+        // Handle other errors appropriately
+        throw error;
+    }
+}
 
-    return getSignedUrl(client, command, { expiresIn: 3600 });
+export async function getUploadUrlForFile(bucketName: string, fileKey: string, contentHash?: string): Promise<string> {
+    const client = getS3Client();
+    const command = contentHash
+        ? new PutObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey,
+            Metadata: {
+                'content-hash': contentHash
+            }
+        })
+        : new PutObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey
+        });
+
+    return getSignedUrl(client, command, {expiresIn: 3600});
 }
 
 export async function deleteFiles(bucketName: string, fileNames: Array<string>): Promise<number> {
-    const Objects: Array<{Key: string}> = fileNames.map((fileName: string) => {
+    const Objects: Array<{ Key: string }> = fileNames.map((fileName: string) => {
         return {Key: fileName}
     });
     const client = getS3Client();
@@ -81,7 +107,7 @@ export async function deleteFiles(bucketName: string, fileNames: Array<string>):
             Objects,
         },
     });
-    const { Deleted } = await client.send(command);
+    const {Deleted} = await client.send(command);
     return Deleted ? Deleted.length : 0;
 }
 
@@ -93,7 +119,7 @@ export async function getFileContentAsString(bucketName: string, fileKey: string
     });
 
     try {
-        const { Body } = await client.send(command);
+        const {Body} = await client.send(command);
         if (Body && Body instanceof Readable) {
             return streamToString(Body);
         }
@@ -110,7 +136,7 @@ export async function getFileContent(bucketName: string, fileKey: string): Promi
         Key: fileKey,
     });
     try {
-        const { Body } = await client.send(command);
+        const {Body} = await client.send(command);
         return Body;
     } catch (error) {
         console.error("Error in getFileContentAsString: ", error);

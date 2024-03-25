@@ -7,6 +7,7 @@ import {publicBucketDataSingleton} from '@/data/PublicBucketData';
 import {siteDataSingleton} from '@/data/SiteData';
 import {generatorDataSingleton} from '@/data/GeneratorData';
 import {systemInfoDataSingleton} from '@/data/SystemInfoData';
+import {hashString} from '@/utils/CryptoUtils';
 
 export type RestoreDataRequest = Promise<void>;
 
@@ -78,7 +79,8 @@ class RestoreDataSingleton {
                         // console.log(`Uploaded ${systemFilePath}`);
                     } else if (filename.startsWith(`${contextDir}/public`)) {
                         const publicFilePath = filename.replace(`${contextDir}/public/`, '');
-                        const postResult = await post<{ url: string }>('/api/admin/post-add-public-file', {filePath: publicFilePath}, accessToken);
+                        const contentHash = await hashString(fileData);
+                        const postResult = await post<{ url: string }>('/api/admin/post-add-public-file', {filePath: publicFilePath, contentHash}, accessToken);
                         if (postResult) {
                             // Create a blob from the string body
                             const blob = await fileData.async('blob');

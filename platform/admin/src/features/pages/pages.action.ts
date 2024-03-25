@@ -3,7 +3,6 @@ import {LoaderFunctionArgs, json, redirect} from 'react-router-dom';
 import {pagesDataSingleton} from '@/data/PagesData';
 import {generatorDataSingleton} from '@/data/GeneratorData';
 import {setSessionState} from '@/utils/localStorage';
-import template from 'lodash-es/template';
 
 const createFormSchema = (inSubDirectory: string, withNewTemplate: string) => {
     let zodObject = {

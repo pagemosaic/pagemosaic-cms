@@ -1,7 +1,7 @@
 import {Router, Request, Response} from 'express';
-import {verifyAuthentication} from '../../utility/RequestUtils';
-import {getUploadUrlForFile} from 'infra-common/aws/bucket';
+import {getUploadUrlForFile, shouldUpload} from 'infra-common/aws/bucket';
 import {PLATFORM_PUBLIC_BUCKET_NAME} from 'infra-common/constants';
+import {verifyAuthentication} from '../../utility/RequestUtils';
 
 const router = Router();
 
@@ -17,8 +17,15 @@ router.post('/post-add-public-file', async (req: Request, res: Response) => {
         return;
     }
     try {
-        const {filePath} = req.body;
-        const url = await getUploadUrlForFile(PLATFORM_PUBLIC_BUCKET_NAME, filePath);
+        const {filePath, contentHash} = req.body;
+        if (contentHash) {
+            const isContentDifferent = await shouldUpload(PLATFORM_PUBLIC_BUCKET_NAME, filePath, contentHash);
+            if (!isContentDifferent) {
+                res.status(200).send({});
+                return;
+            }
+        }
+        const url = await getUploadUrlForFile(PLATFORM_PUBLIC_BUCKET_NAME, filePath, contentHash);
         res.status(200).send({url});
     } catch (err: any) {
         console.error(err);

@@ -22,6 +22,7 @@ import {
 import {FileObject} from 'infra-common/system/Bucket';
 import {pagesDataSingleton} from '@/data/PagesData';
 import {formatDate} from '@/utils/FormatUtils';
+import {hashString} from '@/utils/CryptoUtils';
 
 export type GeneratorData = {
     generator: DI_Generator;
@@ -56,7 +57,7 @@ class GeneratorDataSingleton {
         throw Error('Missing access token');
     }
 
-    private async uploadFile(fileBody: string, filePath: string, contentType: string): Promise<void> {
+    private async uploadFile(fileBody: string, filePath: string, contentType: string): Promise<boolean> {
         const filePathParts = filePath.split('/');
         if (filePathParts.length === 0) {
             throw Error('Publishing file paths has the wrong format');
@@ -65,14 +66,17 @@ class GeneratorDataSingleton {
         if (!accessToken) {
             throw Error('Missing access token');
         }
-        const postResult = await post<{ url: string }>('/api/admin/post-add-public-file', {filePath}, accessToken);
-        if (postResult) {
+        const contentHash = await hashString(fileBody);
+        const postResult = await post<{ url: string }>('/api/admin/post-add-public-file', {filePath, contentHash}, accessToken);
+        if (postResult && postResult.url) {
             // Create a blob from the string body with the specified content type
             const blob = new Blob([fileBody], { type: contentType });
             // Create a File object from the blob
             const file = new File([blob], filePathParts[filePathParts.length - 1], { type: contentType });
             await putFile1(postResult.url, file, wrappedProgressCB);
+            return true;
         }
+        return false;
     }
 
     async publishChanges(websiteDomain: string): Promise<void> {
@@ -161,94 +165,122 @@ class GeneratorDataSingleton {
                                 SiteStyles || ''
                             );
 
-                            await this.uploadFile(
+                            if (await this.uploadFile(
                                 siteFiles.styles.fileBody,
                                 siteFiles.styles.filePath,
                                 'text/css'
-                            );
-                            invalidatePaths.push(siteFiles.styles.filePath);
+                            )) {
+                                invalidatePaths.push(siteFiles.styles.filePath);
+                                toast.success(
+                                    'The global styles has been published successfully'
+                                );
+                            }
                             delete filesMap[siteFiles.styles.filePath];
 
-                            await this.uploadFile(
+                            if (await this.uploadFile(
                                 siteFiles.sitemap.fileBody,
                                 siteFiles.sitemap.filePath,
                                 'text/xml'
-                            );
-                            invalidatePaths.push(siteFiles.sitemap.filePath);
+                            )) {
+                                invalidatePaths.push(siteFiles.sitemap.filePath);
+                                toast.success(
+                                    'The sitemap file has been published successfully'
+                                );
+                            }
                             delete filesMap[siteFiles.sitemap.filePath];
 
                             const templatesMap: Record<string, DI_TemplateEntry> = {};
+                            let runningTasks: Array<Promise<any>> = [];
                             for (const pageEntry of pageEntries) {
-                                const fullPageEntry = await get<DI_PageEntry>(
-                                    `/api/admin/get-full-page?pageId=${getIdFromPK(pageEntry.Entry?.PK.S)}`,
-                                    accessToken
-                                );
-                                if (!fullPageEntry) {
-                                    continue;
+                                if (runningTasks.length >= 3) {
+                                    await Promise.race(runningTasks);
                                 }
-                                const {Entry, Meta, Article, Content} = fullPageEntry;
-                                if (SiteContent && Entry && Meta && Article && Content) {
-                                    if (Entry.EntryType.S !== DI_DELETED_PAGE_ENTRY_TYPE) {
-                                        const templateId = Meta.PageTemplateId.S;
-                                        let templateEntry: DI_TemplateEntry | null = templatesMap[templateId];
-                                        if (!templateEntry) {
-                                            templateEntry = await this.fetchTemplateEntry(templateId);
+                                const workTask = (async () => {
+                                    const fullPageEntry = await get<DI_PageEntry>(
+                                        `/api/admin/get-full-page?pageId=${getIdFromPK(pageEntry.Entry?.PK.S)}`,
+                                        accessToken
+                                    );
+                                    if (!fullPageEntry) {
+                                        return;
+                                    }
+                                    const {Entry, Meta, Article, Content} = fullPageEntry;
+                                    if (SiteContent && Entry && Meta && Article && Content) {
+                                        if (Entry.EntryType.S !== DI_DELETED_PAGE_ENTRY_TYPE) {
+                                            const templateId = Meta.PageTemplateId.S;
+                                            let templateEntry: DI_TemplateEntry | null = templatesMap[templateId];
+                                            if (!templateEntry) {
+                                                templateEntry = await this.fetchTemplateEntry(templateId);
+                                                if (templateEntry) {
+                                                    templatesMap[templateId] = templateEntry;
+                                                }
+                                            }
                                             if (templateEntry) {
-                                                templatesMap[templateId] = templateEntry;
+                                                const {Styles, Html} = templateEntry;
+                                                const thisPage: PageContext = {
+                                                    id: getIdFromPK(Entry.PK.S),
+                                                    templateId,
+                                                    title: Meta.PageTitle.S || '',
+                                                    route: getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S,
+                                                    slug: Meta.PageSlug.S,
+                                                    blocks: JSON.parse(Content.PageContentData.S || '[]'),
+                                                    excludeFromSitemap: Meta.ExcludeFromSitemap?.S === 'true',
+                                                    updated: formatDate(Number(Entry.EntryUpdateDate.N))
+                                                };
+                                                const pageFiles: PageFiles = await localHtmlGeneratorSingleton.generatePageFiles({
+                                                    site,
+                                                    thisPage,
+                                                    markdown: Article.PageArticleData.S || '',
+                                                    html: Html || '',
+                                                    styles: Styles || '',
+                                                    siteScripts: siteFiles.siteScripts,
+                                                    siteBodyScripts: siteFiles.siteBodyScripts,
+                                                    siteStyles: siteFiles.styles.url
+                                                });
+
+                                                let uploadedFilesCounter = 0;
+                                                if (await this.uploadFile(
+                                                    pageFiles.styles.fileBody,
+                                                    pageFiles.styles.filePath,
+                                                    'text/css'
+                                                )) {
+                                                    invalidatePaths.push(pageFiles.styles.filePath);
+                                                    uploadedFilesCounter++;
+                                                }
+                                                if (await this.uploadFile(
+                                                    pageFiles.html.fileBody,
+                                                    pageFiles.html.filePath,
+                                                    'text/html'
+                                                )) {
+                                                    invalidatePaths.push(pageFiles.html.filePath);
+                                                    uploadedFilesCounter++;
+                                                }
+                                                delete filesMap[pageFiles.styles.filePath];
+                                                delete filesMap[pageFiles.html.filePath];
+                                                if (uploadedFilesCounter > 0) {
+                                                    toast.success(
+                                                        'The page has been published successfully', {
+                                                            description: thisPage.title
+                                                        }
+                                                    );
+                                                }
                                             }
                                         }
-                                        if (templateEntry) {
-                                            const {Styles, Html} = templateEntry;
-                                            const thisPage: PageContext = {
-                                                id: getIdFromPK(Entry.PK.S),
-                                                templateId,
-                                                title: Meta.PageTitle.S || '',
-                                                route: getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S,
-                                                slug: Meta.PageSlug.S,
-                                                blocks: JSON.parse(Content.PageContentData.S || '[]'),
-                                                excludeFromSitemap: Meta.ExcludeFromSitemap?.S === 'true',
-                                                updated: formatDate(Number(Entry.EntryUpdateDate.N))
-                                            };
-                                            const pageFiles: PageFiles = await localHtmlGeneratorSingleton.generatePageFiles({
-                                                site,
-                                                thisPage,
-                                                markdown: Article.PageArticleData.S || '',
-                                                html: Html || '',
-                                                styles: Styles || '',
-                                                siteScripts: siteFiles.siteScripts,
-                                                siteBodyScripts: siteFiles.siteBodyScripts,
-                                                siteStyles: siteFiles.styles.url
-                                            });
-                                            await this.uploadFile(
-                                                pageFiles.styles.fileBody,
-                                                pageFiles.styles.filePath,
-                                                'text/css'
-                                            );
-                                            await this.uploadFile(
-                                                pageFiles.html.fileBody,
-                                                pageFiles.html.filePath,
-                                                'text/html'
-                                            );
-                                            invalidatePaths.push(pageFiles.styles.filePath);
-                                            invalidatePaths.push(pageFiles.html.filePath);
-                                            delete filesMap[pageFiles.styles.filePath];
-                                            delete filesMap[pageFiles.html.filePath];
-                                            toast.success(
-                                                'The page has been published successfully', {
-                                                    description: thisPage.title
-                                                }
-                                            );
-                                        }
                                     }
-                                }
+                                })().finally(() => {
+                                    runningTasks = runningTasks.filter(p => p !== workTask);
+                                });
+                                runningTasks.push(workTask);
                             }
+                            await Promise.all(runningTasks);
                         }
-                        await this.uploadFile(
+                        if (await this.uploadFile(
                             defaultRobots,
                             'robots.txt',
                             'text/plain'
-                        );
-                        invalidatePaths.push('robots.txt');
+                        )) {
+                            invalidatePaths.push('robots.txt');
+                        }
+                        delete filesMap['robots.txt'];
                         await post('/api/admin/post-generation-end', {
                             deletePaths: Object.keys(filesMap),
                             invalidatePaths
