@@ -150,7 +150,7 @@ class GeneratorDataSingleton {
                                 }
                             }
 
-                            const {SiteScripts, SiteStyles, SiteContent, SiteBodyScripts, SitePartials} = siteEntry;
+                            const {SiteStyles, SiteContent, SitePartials} = siteEntry;
                             let partials: Record<string, string> = {};
                             if (SitePartials && SitePartials.length > 0) {
                                 for (const sitePartial of SitePartials) {
@@ -166,8 +166,6 @@ class GeneratorDataSingleton {
                             };
                             const siteFiles: SiteFiles = await localHtmlGeneratorSingleton.generateSiteFiles(
                                 site,
-                                SiteScripts || '',
-                                SiteBodyScripts || '',
                                 SiteStyles || ''
                             );
 
@@ -238,8 +236,8 @@ class GeneratorDataSingleton {
                                                     markdown: Article.PageArticleData.S || '',
                                                     html: Html || '',
                                                     styles: Styles || '',
-                                                    siteScripts: siteFiles.siteScripts,
-                                                    siteBodyScripts: siteFiles.siteBodyScripts,
+                                                    // siteScripts: siteFiles.siteScripts,
+                                                    // siteBodyScripts: siteFiles.siteBodyScripts,
                                                     siteStyles: siteFiles.styles.url
                                                 });
 

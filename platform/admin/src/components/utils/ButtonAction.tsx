@@ -6,9 +6,10 @@ type ButtonActionProps = ButtonProps & {
     label?: string;
     Icon?: LucideIcon;
     isLoading?: boolean;
+    SuffixIcon?: LucideIcon;
 }
 
-export const ButtonAction = React.forwardRef<HTMLButtonElement, ButtonActionProps>(({label, Icon, isLoading, disabled, size, ...rest}: ButtonActionProps, ref) => {
+export const ButtonAction = React.forwardRef<HTMLButtonElement, ButtonActionProps>(({label, Icon, SuffixIcon, isLoading, disabled, size, ...rest}: ButtonActionProps, ref) => {
     let iconClassSizing = 'w-4 h-4';
     if (size === 'xxs') {
         iconClassSizing = 'w-3 h-3';
@@ -28,15 +29,18 @@ export const ButtonAction = React.forwardRef<HTMLButtonElement, ButtonActionProp
                     <div className="flex flex-row gap-2 items-center">
                         {Icon && (<LucideRefreshCw className={`${iconClassSizing} animate-spin`}/>)}
                         {label && (<span className="whitespace-nowrap">{label}</span>)}
+                        {SuffixIcon && (<SuffixIcon className={iconClassSizing} />)}
                     </div>
                 )
                 : (
                     <div className="flex flex-row gap-2 items-center">
                         {Icon && (<Icon className={iconClassSizing}/>)}
                         {label && (<span className="whitespace-nowrap">{label}</span>)}
+                        {SuffixIcon && (<SuffixIcon className={iconClassSizing} />)}
                     </div>
                 )
             }
+
         </Button>
     );
 });

@@ -352,8 +352,6 @@ export async function createSiteEntry(): Promise<DI_SiteEntry> {
     await createOrUpdateItem<DI_EntrySlice>(PLATFORM_DOCUMENTS_TABLE_NAME, result.Entry as DI_EntrySlice);
     await createOrUpdateItem<DI_SiteMapSlice>(PLATFORM_DOCUMENTS_TABLE_NAME, result.SiteMap as DI_SiteMapSlice);
     await createOrUpdateItem<DI_SiteContentSlice>(PLATFORM_DOCUMENTS_TABLE_NAME, result.SiteContent as DI_SiteContentSlice);
-    await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteScripts.html`, '', 'text/html');
-    await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteBodyScripts.html`, '', 'text/html');
     await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteStyles.css`, '/* No Styles */', 'text/css');
     return result;
 }

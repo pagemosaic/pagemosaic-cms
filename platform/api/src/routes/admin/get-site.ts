@@ -17,8 +17,6 @@ router.get('/get-site', async (req: Request, res: Response) => {
     try {
         const siteEntry: DI_SiteEntry = await getSiteEntry();
         siteEntry.SiteStyles = await getFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteStyles.css`);
-        siteEntry.SiteScripts = await getFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteScripts.html`);
-        siteEntry.SiteBodyScripts = await getFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteBodyScripts.html`);
         res.status(200).json({siteEntry});
     } catch (e: any) {
         res.status(500).send(e.message);

@@ -1,6 +1,6 @@
 import React from 'react';
 import {CopyToClipboardButton} from '@/components/utils/CopyToClipboardButton';
-import {DI_TemplateEntry} from 'infra-common/data/DocumentItem';
+import {DI_TemplateEntry, DI_SiteEntry, DI_SitePartialContentSlice} from 'infra-common/data/DocumentItem';
 import {getIdFromPK} from 'infra-common/utility/database';
 
 const pageTitleSnippet = `{{ thisPage.title }}`;
@@ -12,6 +12,9 @@ const inDevModeSnippet = `{% if isDevMode != 'true' %}
     <!-- do anything that you don't do in the dev mode -->
 {% endif %}
 `;
+const sitePartialsSnippet = (sitePartial: DI_SitePartialContentSlice) => {
+    return `{{ partials.${sitePartial.SitePartialKey.S} }}`;
+};
 const linkedPageSnippet = (templateEntries: Array<DI_TemplateEntry>) => {
     let result = '';
     templateEntries.forEach(templateEntry => {
@@ -117,6 +120,7 @@ const contentConfigSectionsMap: Array<{ label: string; snippet: string }> = [
 ];
 
 interface ExtraDataHelpPanelProps {
+    siteEntry?: DI_SiteEntry;
     templateEntries?: Array<DI_TemplateEntry>;
 }
 
@@ -127,7 +131,7 @@ function FieldDot() {
 }
 
 export function ExtraDataHelpPanel(props: ExtraDataHelpPanelProps) {
-    const {templateEntries} = props;
+    const {siteEntry, templateEntries} = props;
     const templateEntriesSnippet = templateEntries ? linkedPageSnippet(templateEntries) : '';
     return (
         <div className="flex flex-col gap-4 prose-fixed">
@@ -147,6 +151,29 @@ export function ExtraDataHelpPanel(props: ExtraDataHelpPanelProps) {
                                         text={section.snippet}
                                     />
                                     <pre className="w-full overflow-auto"><code>{section.snippet}</code></pre>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
+            <div className="flex flex-col gap-2">
+                <h4 className="line-clamp-1">Partials</h4>
+                <ul>
+                    {siteEntry?.SitePartials.map((sitePartial, partialIndex) => {
+                        const snippet = sitePartialsSnippet(sitePartial);
+                        return (
+                            <li key={`partial_${partialIndex}`} className="flex flex-col gap-2 relative">
+                                <FieldDot/>
+                                <p>Get <code>{sitePartial.SitePartialLabel.S}</code> partial</p>
+                                <div className="relative w-full">
+                                    <CopyToClipboardButton
+                                        className="absolute -right-[5px] -top-[5px] z-10 bg-slate-100 text-slate-600"
+                                        variant="outline"
+                                        size="xs"
+                                        text={snippet}
+                                    />
+                                    <pre className="w-full overflow-auto"><code>{snippet}</code></pre>
                                 </div>
                             </li>
                         );

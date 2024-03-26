@@ -291,7 +291,7 @@ class PageDataSingleton {
                     const {pageEntry, templateEntry} = pageData;
                     const {Entry, Meta, Content, Article} = pageEntry;
                     const {Html, Styles} = templateEntry;
-                    const {SiteContent, SiteStyles, SiteScripts, SiteBodyScripts, SitePartials} = siteEntry;
+                    const {SiteContent, SiteStyles, SitePartials} = siteEntry;
                     if (SiteContent && Meta && Content && Article && defaultWebsiteUrl) {
                         const linkedPages: Record<string, PageBasicContext> = {};
                         if (pagesData?.pageEntries) {
@@ -345,8 +345,8 @@ class PageDataSingleton {
                                 thisPage,
                                 html: Html ||  '<!doctype html><html></html>',
                                 styles: Styles || '/* no styles */',
-                                siteScripts: SiteScripts,
-                                siteBodyScripts: SiteBodyScripts,
+                                // siteScripts: SiteScripts,
+                                // siteBodyScripts: SiteBodyScripts,
                                 siteStyles: SiteStyles,
                                 markdown: Article.PageArticleData.S || ''
                             })

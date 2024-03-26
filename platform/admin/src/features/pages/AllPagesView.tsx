@@ -172,6 +172,7 @@ export function AllPagesView(props: AllPagesViewProps) {
 
     const currentPageViewPreviewRecord = filterString ? pagesViewRecords['_filtered'] : pagesViewRecords[currentNode.path];
     const lastRun = Number(generatorData?.generator.Status?.LastRun.N || 0);
+    const lastChanged = Number(generatorData?.generator.Status?.LastChanged.N || 0);
 
     let folderPath: Array<PagesNode> = currentNode ? getParentNodes(currentNode) : [];
     if (folderPath.length > 3) {
@@ -420,7 +421,7 @@ export function AllPagesView(props: AllPagesViewProps) {
                                                                                         <div>
                                                                                             <GeneratorStatus
                                                                                                 created={created}
-                                                                                                updated={templateRow.updated > updated ? templateRow.updated : updated}
+                                                                                                updated={lastChanged > updated ? lastChanged : templateRow.updated > updated ? templateRow.updated : updated}
                                                                                                 lastRun={lastRun}
                                                                                             />
                                                                                         </div>

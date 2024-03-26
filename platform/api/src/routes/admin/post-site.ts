@@ -26,7 +26,7 @@ router.post('/post-site', async (req: Request, res: Response) => {
     }
     try {
         const site: DI_SiteEntry = req.body.site;
-        const {Entry, SiteContent, SitePartials, SiteScripts, SiteBodyScripts, SiteStyles} = site;
+        const {Entry, SiteContent, SitePartials, SiteStyles} = site;
         if (Entry && SiteContent) {
             const prevSiteEntry: DI_SiteEntry = await getSiteEntry();
             Entry.EntryUpdateDate.N = Date.now().toString();
@@ -48,8 +48,6 @@ router.post('/post-site', async (req: Request, res: Response) => {
                     });
                 }
             }
-            await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteScripts.html`, SiteScripts || '', 'text/html');
-            await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteBodyScripts.html`, SiteBodyScripts || '', 'text/html');
             await writeFileContentAsString(PLATFORM_SYSTEM_BUCKET_NAME, `${BUCKET_DOCUMENTS_DIR}/site/siteStyles.css`, SiteStyles || '', 'text/css');
             await updateGeneratorLastChange(Entry.EntryUpdateDate.N);
         }

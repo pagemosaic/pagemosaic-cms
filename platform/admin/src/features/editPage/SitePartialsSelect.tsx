@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useRef, useEffect} from 'react';
-import {LucidePlusCircle, LucideX, LucideTrash2, LucideSave} from 'lucide-react';
+import {LucidePlusCircle, LucideX, LucideTrash2, LucideSave, LucideChevronDown} from 'lucide-react';
 import set from 'lodash-es/set';
 import {DI_SiteEntry} from 'infra-common/data/DocumentItem';
 import {useSessionState} from '@/utils/localStorage';
@@ -92,7 +92,8 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                                 <ButtonAction
                                     size="sm"
                                     label={selectedPartialIndex >= 0 ? siteEntry?.SitePartials[selectedPartialIndex].SitePartialLabel.S : 'Select Partial...'}
-                                    variant="outline"
+                                    SuffixIcon={LucideChevronDown}
+                                    variant="default"
                                     disabled={!siteEntry?.SitePartials || siteEntry?.SitePartials.length === 0}
                                 />
                             </DropdownMenuTrigger>
@@ -149,7 +150,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                         {selectedPartialIndex >= 0 && (
                             <p className="font-normal text-sm">
                                 You are going to
-                                delete {siteEntry?.SitePartials[selectedPartialIndex].SitePartialLabel.S} partial.
+                                delete the "{siteEntry?.SitePartials[selectedPartialIndex].SitePartialLabel.S}" partial.
                             </p>
                         )}
                     </div>
@@ -191,6 +192,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                                 name="newPartialLabel"
                                 type="text"
                                 defaultValue=""
+                                onKeyDown={e => {if (e.key === 'Enter') { e.preventDefault(); addNewPartial(); }}}
                             />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -201,6 +203,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                                 name="newPartialKey"
                                 type="text"
                                 defaultValue=""
+                                onKeyDown={e => {if (e.key === 'Enter') { e.preventDefault(); addNewPartial(); }}}
                             />
                             <p className="text-sm text-muted-foreground">
                                 The partial key is used as a Liquid object key to include in the HTML page template

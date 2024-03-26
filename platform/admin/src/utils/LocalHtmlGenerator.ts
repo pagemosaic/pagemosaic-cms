@@ -33,15 +33,11 @@ export interface PreviewProcessorProps {
     html: string;
     styles: string;
     siteStyles?: string;
-    siteScripts?: string;
-    siteBodyScripts?: string;
     thisPage: PageContext;
     site: SiteContext;
 }
 
 export type SiteFiles = {
-    siteScripts?: string;
-    siteBodyScripts?: string;
     styles: {
         url: string;
         filePath: string;
@@ -95,8 +91,6 @@ class LocalHtmlGenerator {
                     markdown,
                     html,
                     styles,
-                    siteScripts,
-                    siteBodyScripts,
                     siteStyles
                 } = props;
                 thisPage.article = await LiquidEngine.parseAndRender(marked.parse(markdown, {async: false}) as string, {
@@ -117,12 +111,6 @@ class LocalHtmlGenerator {
                         site
                     })
                     : undefined;
-                const renderedSiteScripts = siteScripts
-                    ? await LiquidEngine.parseAndRender(siteScripts, {
-                        isDevMode: 'true',
-                        site
-                    })
-                    : '';
                 const partials: Record<string, string> = {};
                 for (const sitePartial of Object.entries(site.partials)) {
                     partials[sitePartial[0]] = await LiquidEngine.parseAndRender(sitePartial[1], {
@@ -130,12 +118,6 @@ class LocalHtmlGenerator {
                         site
                     });
                 }
-                const renderedSiteBodyScripts = siteBodyScripts
-                    ? await LiquidEngine.parseAndRender(siteBodyScripts, {
-                        isDevMode: 'true',
-                        site
-                    })
-                    : '';
                 const stylesTag = renderedSiteStyles
                     ? `<style>${renderedSiteStyles}</style>\n<style>${renderedPageStyles}</style>`
                     : `<style>${renderedPageStyles}</style>`;
@@ -146,8 +128,6 @@ class LocalHtmlGenerator {
                     site,
                     styles: stylesTag,
                     partials,
-                    headScripts: renderedSiteScripts,
-                    bodyScripts: renderedSiteBodyScripts
                 });
                 this.htmlGeneratorPromise = undefined;
                 return rendered;
@@ -168,8 +148,6 @@ class LocalHtmlGenerator {
                     thisPage,
                     site,
                     styles,
-                    siteScripts,
-                    siteBodyScripts,
                     siteStyles
                 } = props;
                 const result: PageFiles = {
@@ -209,8 +187,6 @@ class LocalHtmlGenerator {
                     styles: siteStyles
                         ? `<link rel="stylesheet" href="${siteStyles}"/>\n<link rel="stylesheet" href="${stylesUrl}"/>`
                         : `<link rel="stylesheet" href="${stylesUrl}"/>`,
-                    headScripts: siteScripts,
-                    bodyScripts: siteBodyScripts,
                 });
                 this.pageFilesGeneratorPromise = undefined;
                 return result;
@@ -222,16 +198,18 @@ class LocalHtmlGenerator {
         return this.pageFilesGeneratorPromise;
     }
 
-    public async generateSiteFiles(site: SiteContext, siteScripts: string, siteBodyScripts: string, siteStyles: string): Promise<SiteFiles> {
+    public async generateSiteFiles(site: SiteContext, siteStyles: string): Promise<SiteFiles> {
         if (!this.siteFilesGeneratorPromise) {
             this.siteFilesGeneratorPromise = (async () => {
                 const filePath = `${BUCKET_GENERATED_DIR}/global/styles.css`;
                 const result: SiteFiles = {
-                    siteScripts: undefined,
-                    siteBodyScripts: undefined,
                     styles: {
                         url: `/${filePath}`,
-                        fileBody: '',
+                        fileBody: siteStyles
+                            ? await LiquidEngine.parseAndRender(siteStyles, {
+                                site
+                            })
+                            : '',
                         filePath
                     },
                     sitemap: {
@@ -239,22 +217,11 @@ class LocalHtmlGenerator {
                         filePath: 'sitemap.xml'
                     }
                 };
-                result.styles.fileBody = siteStyles
-                    ? await LiquidEngine.parseAndRender(siteStyles, {
-                        site
-                    })
-                    : '';
-                result.siteScripts = siteScripts
-                    ? await LiquidEngine.parseAndRender(siteScripts, {
-                        site
-                    })
-                    : undefined;
-                result.siteBodyScripts = siteBodyScripts
-                    ? await LiquidEngine.parseAndRender(siteBodyScripts, {
-                        site
-                    })
-                    : undefined;
-
+                // result.styles.fileBody = siteStyles
+                //     ? await LiquidEngine.parseAndRender(siteStyles, {
+                //         site
+                //     })
+                //     : '';
                 this.siteFilesGeneratorPromise = undefined;
                 return result;
             })().catch((e: any) => {

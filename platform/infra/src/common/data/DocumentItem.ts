@@ -107,7 +107,7 @@ export type DI_TemplateEntry = {
     Entry?: DI_EntrySlice; // PK: TEMPLATE#[TEMPLATE_ID], SK: ENTRY
     Meta?: DI_TemplateMetaSlice; // PK: TEMPLATE#[TEMPLATE_ID], SK: TEMPLATE_META
     Content?: DI_TemplateContentSlice; // PK: TEMPLATE#[TEMPLATE_ID], SK: TEMPLATE_CONTENT
-    Html?: string; // html + handlebars
+    Html?: string; // html
     Styles?: string; // CSS styles
 };
 
@@ -116,8 +116,6 @@ export type DI_SiteEntry = {
     SiteMap?: DI_SiteMapSlice;
     SiteContent?: DI_SiteContentSlice;
     SiteStyles?: string; // CSS global
-    SiteScripts?: string; // global HTML header
-    SiteBodyScripts?: string; // global HTML body footer
     SitePartials: Array<DI_SitePartialContentSlice>;
 };
 

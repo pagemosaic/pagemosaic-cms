@@ -100,9 +100,6 @@ export const HelpSheet = forwardRef<HelpSheepHandler, HelpSheetProps>((props, re
                         <TabsTrigger value="pageData">
                             Page Data
                         </TabsTrigger>
-                        {/*<TabsTrigger value="metaData">*/}
-                        {/*    Meta Data*/}
-                        {/*</TabsTrigger>*/}
                         <TabsTrigger value="siteData">
                             Site Data
                         </TabsTrigger>
@@ -118,11 +115,6 @@ export const HelpSheet = forwardRef<HelpSheepHandler, HelpSheetProps>((props, re
                                 />
                             </div>
                         </TabsContent>
-                        {/*<TabsContent value="metaData">*/}
-                        {/*    <div className="flex flex-col gap-2">*/}
-                        {/*        <MetaDataHelpPanel />*/}
-                        {/*    </div>*/}
-                        {/*</TabsContent>*/}
                         <TabsContent value="siteData">
                             <div className="flex flex-col gap-2">
                                 <SiteDataHelpPanel
@@ -132,7 +124,10 @@ export const HelpSheet = forwardRef<HelpSheepHandler, HelpSheetProps>((props, re
                         </TabsContent>
                         <TabsContent value="more">
                             <div className="flex flex-col gap-2">
-                                <ExtraDataHelpPanel templateEntries={pagesData?.templateEntries} />
+                                <ExtraDataHelpPanel
+                                    siteEntry={siteEntry}
+                                    templateEntries={pagesData?.templateEntries}
+                                />
                             </div>
                         </TabsContent>
                     </div>
