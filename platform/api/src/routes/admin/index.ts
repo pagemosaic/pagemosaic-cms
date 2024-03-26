@@ -39,6 +39,7 @@ import postDeleteRecords from './post-delete-records';
 import getTemplatesWebsitesGalleryIndex from './get-templates-websites-gallery-index';
 import postTemplateTitle from './post-template-title';
 import getFullPage from './get-full-page';
+import getSiteEntry from './get-site-entry';
 
 const router = Router();
 
@@ -82,5 +83,6 @@ router.use(postDeleteRecords);
 router.use(getTemplatesWebsitesGalleryIndex);
 router.use(postTemplateTitle);
 router.use(getFullPage);
+router.use(getSiteEntry);
 
 export default router;

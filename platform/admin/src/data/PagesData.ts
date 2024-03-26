@@ -1,5 +1,5 @@
 import {nanoid} from 'nanoid';
-import {DI_PageEntry, DI_TemplateEntry} from 'infra-common/data/DocumentItem';
+import {DI_PageEntry, DI_TemplateEntry, DI_SiteEntry} from 'infra-common/data/DocumentItem';
 import {accessTokenSingleton, AccessToken} from '@/utils/AccessTokenSingleton';
 import {get, post} from '@/utils/ClientApi';
 import {generatorDataSingleton} from '@/data/GeneratorData';
@@ -12,6 +12,7 @@ import {historyDataSingleton} from '@/data/HistoryData';
 
 export type PagesRoots = Array<PagesNode>;
 export type PagesData = {
+    siteEntry: DI_SiteEntry | null;
     pagesRoots: PagesRoots;
     templateEntries: Array<DI_TemplateEntry>;
     pageEntries: Array<DI_PageEntry>;
@@ -37,7 +38,11 @@ class PagesDataSingleton {
             if (accessToken) {
                 this.dataPromise = (async () => {
                     this.dataInstance = null;
-                    const [pageEntries, templateEntries] = await Promise.all([
+                    const [siteEntry, pageEntries, templateEntries] = await Promise.all([
+                        get<DI_SiteEntry>(
+                            '/api/admin/get-site-entry',
+                            accessToken
+                        ),
                         get<Array<DI_PageEntry>>(
                             '/api/admin/get-pages',
                             accessToken
@@ -68,6 +73,7 @@ class PagesDataSingleton {
                         }
                     }
                     this.dataInstance = {
+                        siteEntry,
                         pagesRoots,
                         templateEntries: templateEntries || [],
                         pageEntries: pageEntries || []
@@ -218,7 +224,7 @@ class PagesDataSingleton {
                         )
                     ]);
                     if (pageEntry && templateEntry && this.dataInstance) {
-                        const {pageEntries = [], templateEntries = []} = this.dataInstance;
+                        const {siteEntry, pageEntries = [], templateEntries = []} = this.dataInstance;
                         const foundPageEntryIndex = pageEntries.findIndex(i => i.Entry?.PK.S === pageEntry.Entry?.PK.S);
                         const foundTemplateEntryIndex = templateEntries.findIndex((i => i.Entry?.PK.S === templateEntry.Entry?.PK.S));
                         if (foundPageEntryIndex >= 0) {
@@ -250,6 +256,7 @@ class PagesDataSingleton {
                             }
                         }
                         this.dataInstance = {
+                            siteEntry,
                             pagesRoots,
                             templateEntries,
                             pageEntries
