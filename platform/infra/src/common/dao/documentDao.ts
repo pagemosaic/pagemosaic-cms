@@ -27,7 +27,7 @@ import {
     DI_PAGE_ARTICLE_SLICE_KEY,
     DI_PAGE_ENTRY_TYPE,
     PLATFORM_SYSTEM_BUCKET_NAME,
-    BUCKET_DOCUMENTS_DIR
+    BUCKET_DOCUMENTS_DIR, DI_SITE_PARTIAL_SLICE_KEY
 } from '../constants';
 import {
     DI_EntrySlice,
@@ -43,7 +43,7 @@ import {
     DI_GeneratorStatusSlice,
     DI_TemplateEntry,
     DI_TemplateContentSlice,
-    DI_TemplateMetaSlice, DI_SiteContentSlice, DI_PageArticleSlice
+    DI_TemplateMetaSlice, DI_SiteContentSlice, DI_PageArticleSlice, DI_SitePartialContentSlice
 } from '../data/DocumentItem';
 import {BasicItem} from '../data/BasicItem';
 import {queryWithExponentialBackoff, createOrUpdateItem, deleteItemByKey} from '../aws/database';
@@ -270,9 +270,6 @@ export async function getTemplateEntriesByKeys(
     for (const key of keys) {
         if (requiredSlices && requiredSlices.length > 0) {
             let resultItem: DI_TemplateEntry = {};
-            // let collectionMeta: DI_CollectionMetaSlice | undefined = undefined;
-            // let collectionContent: DI_CollectionContentSlice | undefined = undefined;
-            // let entry: DI_EntrySlice | undefined = undefined;
             for (const slice of requiredSlices) {
                 const params: QueryCommandInput = {
                     TableName: PLATFORM_DOCUMENTS_TABLE_NAME,
@@ -306,7 +303,9 @@ export async function getTemplateEntriesByKeys(
 }
 
 export async function getSiteEntry(): Promise<DI_SiteEntry> {
-    const result: DI_SiteEntry = {};
+    const result: DI_SiteEntry = {
+        SitePartials: []
+    };
     const params: QueryCommandInput = {
         TableName: PLATFORM_DOCUMENTS_TABLE_NAME,
         KeyConditionExpression: 'PK = :keyValue',
@@ -323,6 +322,9 @@ export async function getSiteEntry(): Promise<DI_SiteEntry> {
                 result.SiteContent = cloneDeep(sliceRecord as DI_SiteContentSlice);
             } else if (sliceRecord.SK.S === DI_ENTRY_SLICE_KEY) {
                 result.Entry = cloneDeep(sliceRecord as DI_EntrySlice);
+            } else if (sliceRecord.SK.S.startsWith(DI_SITE_PARTIAL_SLICE_KEY)) {
+                result.SitePartials = result.SitePartials || [];
+                result.SitePartials.push(cloneDeep(sliceRecord as DI_SitePartialContentSlice));
             }
         }
     }
@@ -344,7 +346,8 @@ export async function createSiteEntry(): Promise<DI_SiteEntry> {
             MainPageId: {S: ''},
             Error404PageId: {S: ''}
         },
-        SiteContent: cloneDeep(defaultSiteContentSlice)
+        SiteContent: cloneDeep(defaultSiteContentSlice),
+        SitePartials: []
     };
     await createOrUpdateItem<DI_EntrySlice>(PLATFORM_DOCUMENTS_TABLE_NAME, result.Entry as DI_EntrySlice);
     await createOrUpdateItem<DI_SiteMapSlice>(PLATFORM_DOCUMENTS_TABLE_NAME, result.SiteMap as DI_SiteMapSlice);

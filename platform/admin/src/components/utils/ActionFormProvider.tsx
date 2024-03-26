@@ -59,6 +59,7 @@ export const ActionFormProvider: React.FC<ActionFormProviderProps> = (props) => 
     const [openConfirmDialog, setOpenConfirmDialog] = useState<boolean>(false);
     const [openProgressDialog, setOpenProgressDialog] = useState<boolean>(false);
     const [actionDataLocal, setActionDataLocal] = useState<any>();
+    const contentDialogRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (fetcher.state === 'idle' && fetcher.data?.ok) {
@@ -80,6 +81,17 @@ export const ActionFormProvider: React.FC<ActionFormProviderProps> = (props) => 
             setActionDataLocal({});
         }
     }, [fetcher.state, fetcher.data]);
+
+    useEffect(() => {
+        if (openConfirmDialog) {
+            setTimeout(() => {
+                const foundAutoFocusElement: HTMLElement | undefined | null = contentDialogRef.current?.querySelector('[data-autofocus]');
+                if (foundAutoFocusElement) {
+                    foundAutoFocusElement.focus();
+                }
+            }, 200);
+        }
+    }, [openConfirmDialog]);
 
     const showDialog = ({dialogType = 'confirm', ...rest}: ShowDialogOptions) => {
         setDialogOptions({dialogType, ...rest});
@@ -152,7 +164,7 @@ export const ActionFormProvider: React.FC<ActionFormProviderProps> = (props) => 
         >
             {children}
             <Dialog open={openConfirmDialog} onOpenChange={setOpenConfirmDialog}>
-                <DialogContent className={dialogOptions?.contentClassName}>
+                <DialogContent ref={contentDialogRef} className={dialogOptions?.contentClassName}>
                     <fetcher.Form method="post" className="flex flex-col gap-6">
                         {hiddenFormInputs}
                         <DialogHeader>

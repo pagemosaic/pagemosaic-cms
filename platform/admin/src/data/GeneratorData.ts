@@ -150,13 +150,19 @@ class GeneratorDataSingleton {
                                 }
                             }
 
-                            const {SiteScripts, SiteStyles, SiteContent, SiteBodyScripts} = siteEntry;
-
+                            const {SiteScripts, SiteStyles, SiteContent, SiteBodyScripts, SitePartials} = siteEntry;
+                            let partials: Record<string, string> = {};
+                            if (SitePartials && SitePartials.length > 0) {
+                                for (const sitePartial of SitePartials) {
+                                    partials[sitePartial.SitePartialKey.S] = sitePartial.SitePartialContentData.S;
+                                }
+                            }
                             const site: SiteContext = {
                                 url: `https://${websiteDomain}`,
                                 domain: websiteDomain,
                                 pages: linkedPages,
-                                blocks: JSON.parse(SiteContent?.SiteContentData.S || '[]')
+                                blocks: JSON.parse(SiteContent?.SiteContentData.S || '[]'),
+                                partials
                             };
                             const siteFiles: SiteFiles = await localHtmlGeneratorSingleton.generateSiteFiles(
                                 site,

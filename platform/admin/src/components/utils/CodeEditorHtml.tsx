@@ -24,10 +24,11 @@ interface CodeEditorHtmlProps {
     withSuggestions?: boolean;
     onChange: (code: string) => void;
     onHelp: () => void;
+    toolbar?: React.ReactNode;
 }
 
 export function CodeEditorHtml(props: CodeEditorHtmlProps) {
-    const {stateKey, code, readOnly = false, withSuggestions = true, onChange, onHelp} = props;
+    const {stateKey, code, readOnly = false, withSuggestions = true, onChange, onHelp, toolbar} = props;
     const monaco = useMonaco();
     const {value: suggestionsRecords} = useSessionState<CodeEditorHtmlSuggestionsRecords>('codeEditorHtmlSuggestions');
     const {
@@ -101,8 +102,12 @@ export function CodeEditorHtml(props: CodeEditorHtmlProps) {
     return (
         <div className="h-full w-full flex flex-col gap-2">
             <div className="flex flex-row justify-between p-2 gap-2 items-start">
-                <div className="flex flex-col gap-1">
+                <div>
+                    {toolbar}
                 </div>
+                {/*<div className="flex flex-row gap-2 items-center">*/}
+                {/*    */}
+                {/*</div>*/}
                 <div className="w-full flex flex-row items-center justify-end">
                     <div>
                         <ButtonAction

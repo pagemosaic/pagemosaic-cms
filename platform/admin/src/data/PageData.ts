@@ -291,7 +291,7 @@ class PageDataSingleton {
                     const {pageEntry, templateEntry} = pageData;
                     const {Entry, Meta, Content, Article} = pageEntry;
                     const {Html, Styles} = templateEntry;
-                    const {SiteContent, SiteStyles, SiteScripts, SiteBodyScripts} = siteEntry;
+                    const {SiteContent, SiteStyles, SiteScripts, SiteBodyScripts, SitePartials} = siteEntry;
                     if (SiteContent && Meta && Content && Article && defaultWebsiteUrl) {
                         const linkedPages: Record<string, PageBasicContext> = {};
                         if (pagesData?.pageEntries) {
@@ -325,11 +325,18 @@ class PageDataSingleton {
                             const {domain: mainDomain, entryPointDomain, entryPointDomainAlias} = platformWebsiteUrl;
                             domain = entryPointDomainAlias || mainDomain || entryPointDomain;
                         }
+                        let partials: Record<string, string> = {};
+                        if (SitePartials && SitePartials.length > 0) {
+                            for (const sitePartial of SitePartials) {
+                                partials[sitePartial.SitePartialKey.S] = sitePartial.SitePartialContentData.S;
+                            }
+                        }
                         const site: SiteContext = {
                             domain,
                             pages: linkedPages,
                             blocks: JSON.parse(SiteContent.SiteContentData.S || '[]'),
-                            url: `https://${domain}`
+                            url: `https://${domain}`,
+                            partials
                         }
                         return {
                             title: Meta.PageTitle.S,

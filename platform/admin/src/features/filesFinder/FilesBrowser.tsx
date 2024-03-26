@@ -8,7 +8,12 @@ import {
 } from 'lucide-react';
 import {PublicBucketStaticData} from '@/data/PublicBucketData';
 import {ButtonAction} from '@/components/utils/ButtonAction';
-import {findNodeByPath, getParentNodes, nodesComparatorByName} from '@/utils/FileObjectUtils';
+import {
+    findNodeByPath,
+    getParentNodes,
+    nodesComparatorByName,
+    nodesComparatorByLastModified
+} from '@/utils/FileObjectUtils';
 import {TreeNode} from 'infra-common/system/Bucket';
 import {
     Table,
@@ -69,7 +74,7 @@ export function FilesBrowser(props: FilesBrowserProps) {
         }
     };
 
-    let sortedContent = currentNode.children.sort(nodesComparatorByName('asc'));
+    let sortedContent = currentNode.children.sort(nodesComparatorByLastModified('asc'));
 
     return (
         <div className="w-full h-[450px] flex flex-col gap-2">
@@ -132,16 +137,16 @@ export function FilesBrowser(props: FilesBrowserProps) {
                         )
                     }
                 </div>
-                <div>
-                    <ButtonLink
-                        to="/files"
-                        label="Manage Files"
-                        size="sm"
-                        variant="outline"
-                        Icon={LucideFiles}
-                        disabled={asyncStatus.isLoading}
-                    />
-                </div>
+                {/*<div>*/}
+                {/*    <ButtonLink*/}
+                {/*        to="/files"*/}
+                {/*        label="Manage Files"*/}
+                {/*        size="sm"*/}
+                {/*        variant="outline"*/}
+                {/*        Icon={LucideFiles}*/}
+                {/*        disabled={asyncStatus.isLoading}*/}
+                {/*    />*/}
+                {/*</div>*/}
                 <div>
                     <PublicFilesUploadButton
                         node={currentNode}

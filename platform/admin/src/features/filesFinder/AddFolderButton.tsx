@@ -40,6 +40,7 @@ export function AddFolderButton(props: AddFolderButtonProps) {
                                 <Input
                                     id="directoryName"
                                     name="directoryName"
+                                    data-autofocus="true"
                                     defaultValue=""
                                     disabled={isInAction}
                                 />

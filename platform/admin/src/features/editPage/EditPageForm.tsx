@@ -33,6 +33,7 @@ import {DI_PageEntry} from 'infra-common/data/DocumentItem';
 import {usePagesBrowser} from '@/features/pages/PagesBrowserProvider';
 import {IFrameToolbox} from '@/components/utils/IFrameToolbox';
 import {SiteBodyScriptsPanel} from '@/features/editPage/SiteBodyScriptsPanel';
+import {SitePartialsPanel} from '@/features/editPage/SitePartialsPanel';
 
 interface EditPageFormProps {
     pageSessionKeys: PageDataSessionKeys;
@@ -175,7 +176,7 @@ export function EditPageForm(props: EditPageFormProps) {
                                                 className="flex flex-col gap-2 w-full h-full"
                                             >
                                                 <TabsList
-                                                    className="grid w-full grid-cols-6">
+                                                    className="grid w-full grid-cols-7">
                                                     <TabsTrigger value="html">
                                                         <ActionDataFieldErrorBadge
                                                             actionData={actionData}
@@ -200,6 +201,9 @@ export function EditPageForm(props: EditPageFormProps) {
                                                     </TabsTrigger>
                                                     <TabsTrigger value="siteBodyScripts">
                                                         <span className="line-clamp-1">Body Scripts</span>
+                                                    </TabsTrigger>
+                                                    <TabsTrigger value="sitePartials">
+                                                        <span>Partials</span>
                                                     </TabsTrigger>
                                                     <TabsTrigger value="siteAssets">
                                                         Assets
@@ -239,6 +243,12 @@ export function EditPageForm(props: EditPageFormProps) {
                                                         <SiteBodyScriptsPanel
                                                             siteSessionStateKey={siteSessionKeys.tempSiteSessionKey}
                                                             actionData={actionData}
+                                                        />
+                                                    </TabsContent>
+                                                    <TabsContent value="sitePartials"
+                                                                 className="absolute top-0 left-0 right-0 bottom-0">
+                                                        <SitePartialsPanel
+                                                            siteSessionStateKey={siteSessionKeys.tempSiteSessionKey}
                                                         />
                                                     </TabsContent>
                                                     <TabsContent value="siteAssets"

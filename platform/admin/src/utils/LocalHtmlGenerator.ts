@@ -10,6 +10,7 @@ export interface SiteContext {
     url: string; // https://domain.com
     blocks: ContentData;
     pages: Record<string, PageBasicContext>;
+    partials: Record<string, string>;
 }
 
 export interface PageBasicContext {
@@ -122,6 +123,13 @@ class LocalHtmlGenerator {
                         site
                     })
                     : '';
+                const partials: Record<string, string> = {};
+                for (const sitePartial of Object.entries(site.partials)) {
+                    partials[sitePartial[0]] = await LiquidEngine.parseAndRender(sitePartial[1], {
+                        isDevMode: 'true',
+                        site
+                    });
+                }
                 const renderedSiteBodyScripts = siteBodyScripts
                     ? await LiquidEngine.parseAndRender(siteBodyScripts, {
                         isDevMode: 'true',
@@ -131,12 +139,14 @@ class LocalHtmlGenerator {
                 const stylesTag = renderedSiteStyles
                     ? `<style>${renderedSiteStyles}</style>\n<style>${renderedPageStyles}</style>`
                     : `<style>${renderedPageStyles}</style>`;
-                const rendered = await LiquidEngine.parseAndRender(html, {
+                const fixedHtml = html.replace('<head>', `<head><base href="https://${site.domain}/" /><base target="_blank" />`)
+                const rendered = await LiquidEngine.parseAndRender(fixedHtml, {
                     isDevMode: 'true',
                     thisPage,
                     site,
                     styles: stylesTag,
-                    headScripts: `<base href="https://${site.domain}/" />\n<base target="_blank" />\n${renderedSiteScripts}`,
+                    partials,
+                    headScripts: renderedSiteScripts,
                     bodyScripts: renderedSiteBodyScripts
                 });
                 this.htmlGeneratorPromise = undefined;
@@ -178,6 +188,13 @@ class LocalHtmlGenerator {
                     site,
                     thisPage
                 });
+                const partials: Record<string, string> = {};
+                for (const sitePartial of Object.entries(site.partials)) {
+                    partials[sitePartial[0]] = await LiquidEngine.parseAndRender(sitePartial[1], {
+                        isDevMode: 'true',
+                        site
+                    });
+                }
                 result.styles.fileBody = styles
                     ? await LiquidEngine.parseAndRender(styles, {
                         site,
@@ -188,6 +205,7 @@ class LocalHtmlGenerator {
                 result.html.fileBody = await LiquidEngine.parseAndRender(html, {
                     site,
                     thisPage,
+                    partials,
                     styles: siteStyles
                         ? `<link rel="stylesheet" href="${siteStyles}"/>\n<link rel="stylesheet" href="${stylesUrl}"/>`
                         : `<link rel="stylesheet" href="${stylesUrl}"/>`,

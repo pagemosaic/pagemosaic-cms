@@ -80,6 +80,13 @@ export type DI_SiteContentSlice = ItemKey & {
     SiteContentDataConfig: {S: string};
 };
 
+// Site -> PK: SITE, SK: SITE_PARTIAL#[PARTIAL_KEY]
+export type DI_SitePartialContentSlice = ItemKey & {
+    SitePartialLabel: {S: string};
+    SitePartialKey: {S: string};
+    SitePartialContentData: {S: string};
+};
+
 // Entries - composites of the slices
 
 export type DI_TagEntry = {
@@ -111,6 +118,7 @@ export type DI_SiteEntry = {
     SiteStyles?: string; // CSS global
     SiteScripts?: string; // global HTML header
     SiteBodyScripts?: string; // global HTML body footer
+    SitePartials: Array<DI_SitePartialContentSlice>;
 };
 
 export type DI_Generator = {
