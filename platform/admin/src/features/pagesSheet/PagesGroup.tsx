@@ -5,7 +5,7 @@ import {Table, TableRow, TableCell, TableBody} from '@/components/ui/table';
 import {PagesNode} from '@/data/PagesData.utility';
 import {usePagesSheet} from '@/features/pagesSheet/PagesSheetProvider';
 import {cn} from '@/utils/ComponentsUtils';
-import {getNormalizedRoute} from 'infra-common/utility/database';
+import {getNormalizedRoute, fixIndexRoute} from 'infra-common/utility/database';
 
 interface PagesGroupProps {
     pagesNode: PagesNode;
@@ -24,7 +24,7 @@ export function PagesGroup(props: PagesGroupProps) {
                         <TableCell className="py-1">
                             <span
                                 className="text-xs text-muted-foreground font-semibold line-clamp-1">
-                                {getNormalizedRoute(pagesNode.path)}
+                                {fixIndexRoute(getNormalizedRoute(pagesNode.path))}
                             </span>
                         </TableCell>
                     </TableRow>

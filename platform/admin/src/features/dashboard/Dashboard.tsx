@@ -7,7 +7,6 @@ import {formatDistanceToNow} from 'date-fns';
 import {useSystemInfo} from '@/data/useSystemInfo';
 import {MainSubSection} from '@/components/layouts/MainSubSection';
 import {Card, CardHeader, CardTitle, CardDescription, CardContent} from '@/components/ui/card';
-import {ButtonAction} from '@/components/utils/ButtonAction';
 import {ButtonLink} from '@/components/utils/ButtonLink';
 import {PagesData} from '@/data/PagesData';
 import {GeneratorData} from '@/data/GeneratorData';
@@ -113,30 +112,38 @@ export function Dashboard(props: DashboardProps) {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid md:grid-cols-4 grid-cols-3 gap-6">
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground font-normal">Pages</p>
+                                        </div>
+                                        <div className="flex-grow flex items-center justify-start">
                                             <p className="text-xl">
                                                 {pagesData?.pageEntries.length || 0}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground font-normal">Pages</p>
-                                        </div>
                                     </div>
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
-                                            <p className="text-xl">
-                                                {pagesData?.templateEntries.length || 0}
-                                            </p>
-                                        </div>
-                                        <div>
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
+                                    <div>
                                             <p className="text-sm text-muted-foreground font-normal">
                                                 Templates
                                             </p>
                                         </div>
+                                        <div className="flex-grow flex items-center justify-start">
+                                            <p className="text-xl">
+                                                {pagesData?.templateEntries.length || 0}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
+                                        <div>
+                                            <p className="text-sm text-muted-foreground font-normal text-center">
+                                                Published
+                                            </p>
+                                        </div>
+                                        <div className="flex-grow flex items-center justify-start">
                                             <p className="text-xl text-center">
                                                 {generatorData?.generator.Status?.LastRun.N && generatorData.generator.Status.LastRun.N !== '0'
                                                     ? formatDistanceToNow(Number(generatorData.generator.Status.LastRun.N), {addSuffix: false}).replace('about', '').trim()
@@ -144,14 +151,15 @@ export function Dashboard(props: DashboardProps) {
                                                 }
                                             </p>
                                         </div>
+                                    </div>
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
                                         <div>
-                                            <p className="text-sm text-muted-foreground font-normal text-center">
-                                                Published
+                                            <p className="text-sm text-muted-foreground font-normal text-center line-clamp-1">
+                                                Changes Made
                                             </p>
                                         </div>
-                                    </div>
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
+                                        <div className="flex-grow flex items-center justify-start">
                                             <p className="text-xl text-center">
                                                 {generatorData?.generator.Status?.LastChanged.N && generatorData.generator.Status.LastChanged.N !== '0'
                                                     ? formatDistanceToNow(Number(generatorData.generator.Status.LastChanged.N), {addSuffix: false}).replace('about', '').trim()
@@ -159,33 +167,30 @@ export function Dashboard(props: DashboardProps) {
                                                 }
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground font-normal text-center line-clamp-1">
-                                                Changes Made
-                                            </p>
-                                        </div>
                                     </div>
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
-                                            <p className="text-xl text-center">
-                                                {(staticFilesData?.totalItems || 0) + (assetsFilesData?.totalItems || 0)}
-                                            </p>
-                                        </div>
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
                                         <div>
                                             <p className="text-sm text-muted-foreground font-normal text-center line-clamp-1">
                                                 Total Files
                                             </p>
                                         </div>
-                                    </div>
-                                    <div className="h-full flex flex-col gap-2 items-center border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
-                                        <div className="flex-grow flex items-center justify-center">
+                                        <div className="flex-grow flex items-center justify-start">
                                             <p className="text-xl text-center">
-                                                {humanReadableBytes((staticFilesData?.totalSize || 0) + (assetsFilesData?.totalSize || 0))}
+                                                {(staticFilesData?.totalItems || 0) + (assetsFilesData?.totalItems || 0)}
                                             </p>
                                         </div>
+                                    </div>
+                                    <div
+                                        className="h-full flex flex-col gap-2 items-start border-solid border-[1px] border-slate-200 p-3 rounded-2xl">
                                         <div>
                                             <p className="text-sm text-muted-foreground font-normal text-center line-clamp-1">
                                                 Files Size
+                                            </p>
+                                        </div>
+                                        <div className="flex-grow flex items-center justify-start">
+                                            <p className="text-xl text-center">
+                                                {humanReadableBytes((staticFilesData?.totalSize || 0) + (assetsFilesData?.totalSize || 0))}
                                             </p>
                                         </div>
                                     </div>

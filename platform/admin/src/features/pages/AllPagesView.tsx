@@ -29,7 +29,7 @@ import {PagesNode, findNodeByPath, getParentNodes, findTemplatesByFilter} from '
 import {TooltipWrapper} from '@/components/utils/TooltipWrapper';
 import {ButtonAction} from '@/components/utils/ButtonAction';
 import {PagePreviewPanel} from '@/features/pages/PagePreviewPanel';
-import {getNormalizedRoute} from 'infra-common/utility/database';
+import {getNormalizedRoute, fixIndexRoute} from 'infra-common/utility/database';
 import {Input} from '@/components/ui/input';
 import {EditTemplateTitleButton} from '@/features/pages/EditTemplateTitleButton';
 import {siteDataSingleton, SiteDataStatus} from '@/data/SiteData';
@@ -414,7 +414,7 @@ export function AllPagesView(props: AllPagesViewProps) {
                                                                                     </div>
                                                                                     <LucideLink
                                                                                         className="text-muted-foreground w-3 h-3"/>
-                                                                                    <p className="text-muted-foreground text-xs">{getNormalizedRoute(pageRoute)}{pageSlug}</p>
+                                                                                    <p className="line-clamp-1 text-muted-foreground text-xs">{fixIndexRoute(getNormalizedRoute(pageRoute) + pageSlug)}</p>
                                                                                     <div></div>
                                                                                     <div
                                                                                         className="flex flex-row gap-2 items-center">
@@ -452,18 +452,6 @@ export function AllPagesView(props: AllPagesViewProps) {
                                                                                             currentPath={currentPath}
                                                                                         />
                                                                                     </div>
-                                                                                    {/*<div>*/}
-                                                                                    {/*    {currentPageViewPreviewRecord?.pageId === pageId*/}
-                                                                                    {/*        ? (*/}
-                                                                                    {/*            <LucideArrowRight*/}
-                                                                                    {/*                className="w-4 h-4"/>*/}
-                                                                                    {/*        )*/}
-                                                                                    {/*        : (*/}
-                                                                                    {/*            <LucideChevronRight*/}
-                                                                                    {/*                className="w-4 h-4"/>*/}
-                                                                                    {/*        )*/}
-                                                                                    {/*    }*/}
-                                                                                    {/*</div>*/}
                                                                                 </div>
                                                                             </TableCell>
                                                                         </TableRow>

@@ -19,7 +19,7 @@ import {DI_PAGE_ROUTE_ROOT} from 'infra-common/constants';
 import {PagesData} from '@/data/PagesData';
 import {PagesNode, findNodeByPath, getParentNodes} from '@/data/PagesData.utility';
 import {TooltipWrapper} from '@/components/utils/TooltipWrapper';
-import {getNormalizedRoute} from 'infra-common/utility/database';
+import {getNormalizedRoute, fixIndexRoute} from 'infra-common/utility/database';
 
 interface PagesBrowserProps {
     pagesData: PagesData;
@@ -185,7 +185,7 @@ export function PagesBrowser(props: PagesBrowserProps) {
                                                                     className="hover:underline text-blue-600 cursor-pointer"
                                                                     onClick={handleSelectItem(
                                                                         pageId,
-                                                                        `${getNormalizedRoute(pageRoute)}${pageSlug}`,
+                                                                        fixIndexRoute(getNormalizedRoute(pageRoute) + pageSlug),
                                                                         pageTitle
                                                                     )}
                                                                 >

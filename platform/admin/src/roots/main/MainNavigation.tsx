@@ -76,7 +76,7 @@ export function MainNavigation() {
                             <LucideChevronDown className="w-4 h-4 ml-2"/>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent collisionPadding={{top: 10, right: 10}}>
+                    <DropdownMenuContent align="end" collisionPadding={{top: 10, right: 10}}>
                         <DropdownMenuItem
                             className="flex flex-row gap-2 items-center"
                             onSelect={() => navigate('/edit-domain')}

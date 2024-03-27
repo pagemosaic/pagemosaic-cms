@@ -74,7 +74,7 @@ export function EditPageFormTitle(props: EditPageFormTitleProps) {
                     Icon={LucideMenu}
                     onClick={togglePagesTree}
                 />
-                <div className="max-w-[450px] line-clamp-1">
+                <div className="max-w-[600px] line-clamp-1">
                     <p className="text-xl">{tempPageEntry?.Meta?.PageTitle.S}</p>
                 </div>
                 {tempPageEntry?.Meta && (

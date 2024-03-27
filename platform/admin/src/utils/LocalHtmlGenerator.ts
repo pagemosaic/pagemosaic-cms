@@ -217,11 +217,6 @@ class LocalHtmlGenerator {
                         filePath: 'sitemap.xml'
                     }
                 };
-                // result.styles.fileBody = siteStyles
-                //     ? await LiquidEngine.parseAndRender(siteStyles, {
-                //         site
-                //     })
-                //     : '';
                 this.siteFilesGeneratorPromise = undefined;
                 return result;
             })().catch((e: any) => {

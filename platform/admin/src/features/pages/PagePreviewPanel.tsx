@@ -54,7 +54,7 @@ export function PagePreviewPanel(props: PagePreviewPanelProps) {
         <div className="flex flex-col gap-2 w-full h-full">
             <div className="flex flex-row items-center justify-between gap-2 h-9 py-1">
                 <div>
-                    <p ref={titleRef} className="text-sm font-semibold text-muted-foreground"></p>
+                    <p ref={titleRef} className="line-clamp-1 text-sm font-semibold text-muted-foreground"></p>
                 </div>
                 <IFrameToolbox/>
             </div>

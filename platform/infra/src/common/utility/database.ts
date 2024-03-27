@@ -29,6 +29,13 @@ export function getDenormalizedRoute(route: string): string {
     throw Error('Wrong format of the specified route.');
 }
 
+export function fixIndexRoute(route: string): string {
+    if (route === '/index') {
+        return '/';
+    }
+    return route;
+}
+
 export function getFilePathByRoute(route: string): string {
     if (route && route.startsWith('/')) {
         return `${route.substring(1)}.html`;

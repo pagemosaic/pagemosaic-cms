@@ -4,7 +4,7 @@ import {accessTokenSingleton, AccessToken} from '@/utils/AccessTokenSingleton';
 import {get, post, putFile1} from '@/utils/ClientApi';
 import {SiteData} from '@/data/SiteData';
 import {defaultRobots} from 'infra-common/utility/defaultInitialFiles';
-import {getIdFromPK, getNormalizedRoute} from 'infra-common/utility/database';
+import {getIdFromPK, getNormalizedRoute, fixIndexRoute} from 'infra-common/utility/database';
 import {
     DI_DELETED_PAGE_ENTRY_TYPE,
     BUCKET_ASSETS_DIR,
@@ -136,7 +136,7 @@ class GeneratorDataSingleton {
                             const linkedPages: Record<string, PageBasicContext> = {};
                             for (const pageEntry of pageEntries) {
                                 const pageId = getIdFromPK(pageEntry.Entry?.PK.S);
-                                const route = getNormalizedRoute(pageEntry.Meta?.PageRoute.S) + pageEntry.Meta?.PageSlug.S;
+                                const route = fixIndexRoute(getNormalizedRoute(pageEntry.Meta?.PageRoute.S) + pageEntry.Meta?.PageSlug.S);
                                 if (pageEntry.Entry?.EntryType.S !== DI_DELETED_PAGE_ENTRY_TYPE) {
                                     linkedPages[pageId] = {
                                         id: pageId,
@@ -224,7 +224,7 @@ class GeneratorDataSingleton {
                                                     id: getIdFromPK(Entry.PK.S),
                                                     templateId,
                                                     title: Meta.PageTitle.S || '',
-                                                    route: getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S,
+                                                    route: fixIndexRoute(getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S),
                                                     slug: Meta.PageSlug.S,
                                                     blocks: JSON.parse(Content.PageContentData.S || '[]'),
                                                     excludeFromSitemap: Meta.ExcludeFromSitemap?.S === 'true',

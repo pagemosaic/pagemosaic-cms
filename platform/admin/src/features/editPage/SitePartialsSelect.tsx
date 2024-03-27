@@ -97,7 +97,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                                     disabled={!siteEntry?.SitePartials || siteEntry?.SitePartials.length === 0}
                                 />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent collisionPadding={{top: 10, right: 10}}>
+                            <DropdownMenuContent align="start" collisionPadding={{top: 10, right: 10}}>
                                 {siteEntry?.SitePartials.map((entry, entryIndex) => {
                                     return (
                                         <DropdownMenuItem

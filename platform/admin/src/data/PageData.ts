@@ -3,7 +3,7 @@ import {accessTokenSingleton, AccessToken} from '@/utils/AccessTokenSingleton';
 import {get, post} from '@/utils/ClientApi';
 import {setSessionState, delSessionState, getSessionState} from '@/utils/localStorage';
 import {pagesDataSingleton, PagesData} from '@/data/PagesData';
-import {getIdFromPK, getNormalizedRoute} from 'infra-common/utility/database';
+import {getIdFromPK, getNormalizedRoute, fixIndexRoute} from 'infra-common/utility/database';
 import {localHtmlGeneratorSingleton, PageContext, SiteContext, PageBasicContext} from '@/utils/LocalHtmlGenerator';
 import {systemInfoDataSingleton, SystemInfoData} from '@/data/SystemInfoData';
 import {SiteData} from '@/data/SiteData';
@@ -302,7 +302,7 @@ class PageDataSingleton {
                                     id: linkedPageId,
                                     templateId: pageEntry.Meta?.PageTemplateId.S || '',
                                     title: pageEntry.Meta?.PageTitle.S || 'Undefined Page Title',
-                                    route: getNormalizedRoute(pageEntry.Meta?.PageRoute.S) + pageEntry.Meta?.PageSlug.S,
+                                    route: fixIndexRoute(getNormalizedRoute(pageEntry.Meta?.PageRoute.S) + pageEntry.Meta?.PageSlug.S),
                                     slug: pageEntry.Meta?.PageSlug.S || '',
                                     excludeFromSitemap: pageEntry.Meta?.ExcludeFromSitemap?.S === 'true',
                                     updated: formatDate(Number(pageEntry.Entry?.EntryUpdateDate.N))
@@ -315,7 +315,7 @@ class PageDataSingleton {
                             slug: Meta.PageSlug.S,
                             templateId: Meta.PageTemplateId.S || '',
                             title: Meta.PageTitle.S || '',
-                            route: getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S,
+                            route: fixIndexRoute(getNormalizedRoute(Meta.PageRoute.S) + Meta.PageSlug.S),
                             blocks: JSON.parse(Content.PageContentData.S || '[]'),
                             excludeFromSitemap: Meta.ExcludeFromSitemap?.S === 'true',
                             updated: formatDate(Number(Entry?.EntryUpdateDate.N))
