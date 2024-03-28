@@ -155,7 +155,7 @@ class LocalHtmlGenerator {
                         title: thisPage.title,
                         url: thisPage.route,
                         fileBody: '',
-                        filePath: `${getDenormalizedRoute(thisPage.route)}.html`
+                        filePath: `${getDenormalizedRoute(thisPage.route) || 'index'}.html`
                     },
                     styles: {
                         fileBody: '',
