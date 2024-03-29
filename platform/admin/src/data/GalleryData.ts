@@ -1,9 +1,9 @@
 import {get} from '@/utils/ClientApi';
 import {AccessToken, accessTokenSingleton} from '@/utils/AccessTokenSingleton';
-import {ProbeData} from '@/data/ProbeData';
 
 export type GalleryItem = {
     title: string;
+    description: string;
     imageUrl: string;
     downloadUrl: string;
     repository: string;

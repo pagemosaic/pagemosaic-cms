@@ -1,5 +1,5 @@
 import React from 'react';
-import {LucideExternalLink, LucideDownloadCloud, LucideCode2} from 'lucide-react';
+import {LucideExternalLink, LucideDownloadCloud, LucideBookOpenText} from 'lucide-react';
 import {Card, CardTitle} from '@/components/ui/card';
 import imagePlaceholder from '@/assets/image-placeholder.svg';
 import {ButtonAction} from '@/components/utils/ButtonAction';
@@ -30,13 +30,13 @@ export function WebsiteTemplateCard(props: WebsiteTemplateCardProps) {
                         <div className="flex flex-col gap-2">
                             <CardTitle>{attrs.title || 'Undefined Title'}</CardTitle>
                             <div className="text-muted-foreground">
-                                <p>Some text here that describe the package...</p>
+                                <p>{attrs.description}</p>
                             </div>
-                            <div className="text-muted-foreground">
-                                <p>{getRepositoryName(attrs.repository)}</p>
-                            </div>
+                            {/*<div className="text-muted-foreground">*/}
+                            {/*    <p>{getRepositoryName(attrs.repository)}</p>*/}
+                            {/*</div>*/}
                         </div>
-                        <div className="flex flex-row items-center gap-2">
+                        <div className="flex flex-row items-center gap-2 flex-wrap">
                             <ButtonAction
                                 size="sm"
                                 variant="default"
@@ -49,8 +49,8 @@ export function WebsiteTemplateCard(props: WebsiteTemplateCardProps) {
                             <ButtonAction
                                 size="sm"
                                 variant="secondary"
-                                Icon={LucideCode2}
-                                label="Source Code"
+                                Icon={LucideBookOpenText}
+                                label="Read Me"
                                 onClick={() => {window.open(attrs.repository, '__blank');}}
                             />
                             <ButtonAction
