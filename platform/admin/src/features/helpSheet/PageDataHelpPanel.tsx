@@ -6,6 +6,7 @@ import {
     ContentDataFieldClass,
     ContentDataFieldTypes
 } from 'infra-common/data/ContentDataConfig';
+import {createSafeRecord} from '@/utils/objectUtils';
 
 type TemplateFunc = (pathPrefix: string, fieldClass: ContentDataFieldClass) => string;
 
@@ -33,7 +34,7 @@ const getBlockLoopTemplate = (blockKey: string) => {
     return result;
 };
 
-const useFieldTemplateMap: Record<typeof ContentDataFieldTypes[number], TemplateFunc> = {
+const useFieldTemplateMap = createSafeRecord<TemplateFunc, Record<typeof ContentDataFieldTypes[number], TemplateFunc>>({
     'string': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
         let result = `{{ ${pathPrefix}.${fieldClass.key}.stringValue }}`;
         if (fieldClass.variants) {
@@ -75,9 +76,9 @@ const useFieldTemplateMap: Record<typeof ContentDataFieldTypes[number], Template
         }
         return '';
     }
-};
+}, () => '<!-- undefined type -->');
 
-const useFieldArrayTemplateMap: Record<typeof ContentDataFieldTypes[number], TemplateFunc> = {
+const useFieldArrayTemplateMap = createSafeRecord<TemplateFunc, Record<typeof ContentDataFieldTypes[number] | string, TemplateFunc>>({
     'string': (pathPrefix: string, fieldClass: ContentDataFieldClass) => {
         let result = `{% for ${fieldClass.key} in ${pathPrefix}.${fieldClass.key} %}\n`;
         result += `\t{{ ${fieldClass.key}.stringValue }}\n`;
@@ -122,7 +123,7 @@ const useFieldArrayTemplateMap: Record<typeof ContentDataFieldTypes[number], Tem
         }
         return '';
     }
-};
+}, () => '<!-- undefined type -->');
 
 interface PageDataHelpPanelProps {
     pageContentDataConfig: string;

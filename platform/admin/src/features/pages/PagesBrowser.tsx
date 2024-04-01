@@ -127,8 +127,8 @@ export function PagesBrowser(props: PagesBrowserProps) {
                     }
                 </div>
             </div>
-            <div className="relative grow">
-                <ScrollArea className="w-full h-full">
+            <div className="grow overflow-auto">
+                <ScrollArea className="w-full h-full pr-1">
                     <div className="flex flex-col gap-3 w-full">
                         {currentNode.children.map((pagesNode, pagesNodeIndex) => {
                             return (
