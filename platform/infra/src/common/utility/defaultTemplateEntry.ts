@@ -19,12 +19,10 @@ const html = `
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    {{headScripts}}
     {{styles}}
   </head>
   <body>
     <h1>Home Page</h1>
-    {{bodyScripts}}
   </body>
 </html>
 `;

@@ -1,24 +1,37 @@
 # Page Mosaic CMS
 
-The project is tailored for deployment on the AWS platform. To get started, you'll need to set up a new AWS account or utilize an existing one.
+Page Mosaic CMS is an open-source platform optimized for AWS to efficiently host static websites.
+It simplifies the process of creating, managing, and publishing content online with an emphasis on cost-effectiveness and efficient use of AWS resources.
+
+[Check out the Page Mosaic website for more info.](https://pagemosaic.com)
+
+## Technical Overview
+### AWS-Based Serverless Architecture
+* `Hosted on AWS:` Utilizing Amazon Web Services for reliable, scalable cloud infrastructure.
+* `Serverless Design:` Employs AWS services like Lambda, CloudFront, and S3 to create a serverless architecture, optimizing for efficiency and scalability.
+
+### Key AWS Services
+* `AWS Lambda:` Manages backend processes without dedicated servers, triggering functions as needed.
+* `Amazon CloudFront:` Acts as the content delivery network, enhancing global content delivery speed and security.
+* `Amazon S3:` Used for secure and scalable storage of files and data.
+
+### Deployment
+* `AWS Cloud Development Kit (CDK):` Infrastructure defined and deployed using CDK, simplifying the deployment process through Command Line Interface (CLI), even for users with minimal technical background.
 
 > Concerns about unnecessary resource accumulation in your account are mitigated.
 > Utilizing the AWS CDK, which employs CloudFormation, the project ensures that all resources are encapsulated within a single CloudFormation Stack.
-> 
+>
 >This approach simplifies resource management, allowing for the straightforward removal of all resources associated with this stack when no longer needed.
 
-Designed for convenience, the project's architecture enables the deployment of all required resources through a single command.
+### Admin Panel
+* `Technologies Used:` Developed with React and TailwindCSS. React for building the user interface, TailwindCSS for styling.
+* `User Interface Components:` Includes various components for managing system features and AWS resources.
 
-## Setting up AWS tools and environment on a local computer.
+## Setting up AWS
 
 ### Create an administrative user on AWS and configure AWS CLI locally
 
-Before deploying the project, you must create an administrative user on your AWS account and configure the AWS CLI on your computer, as shown in the video below.
-   <p align="center">
-      <a href="https://youtu.be/5_UlOTywdOA" target="_blank">
-   <img src="https://github.com/pagemosaic/.github/blob/main/images/og/youtube_video_cover_image-min.png" alt="Video 1" width="45%"/>
-      </a>
-   </p>
+Before deploying the project, you must create an administrative user on your AWS account and configure the AWS CLI on your computer.
 
 ### Install CDK
 
@@ -26,9 +39,6 @@ Before deploying the project, you must create an administrative user on your AWS
 ```shell
 npm install -g aws-cdk
 ```
-
-<br/>
-<br/>
 
 ## Deployment & Usage
 
