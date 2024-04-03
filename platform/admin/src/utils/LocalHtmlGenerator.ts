@@ -93,11 +93,6 @@ class LocalHtmlGenerator {
                     styles,
                     siteStyles
                 } = props;
-                thisPage.article = await LiquidEngine.parseAndRender(marked.parse(markdown, {async: false}) as string, {
-                    isDevMode: 'true',
-                    site,
-                    thisPage
-                });
                 const renderedPageStyles = styles
                     ? await LiquidEngine.parseAndRender(styles, {
                         isDevMode: 'true',
@@ -122,6 +117,12 @@ class LocalHtmlGenerator {
                     ? `<style>${renderedSiteStyles}</style>\n<style>${renderedPageStyles}</style>`
                     : `<style>${renderedPageStyles}</style>`;
                 const fixedHtml = html.replace('<head>', `<head><base href="https://${site.domain}/" /><base target="_blank" />`)
+                thisPage.article = await LiquidEngine.parseAndRender(marked.parse(markdown, {async: false}) as string, {
+                    isDevMode: 'true',
+                    site,
+                    thisPage,
+                    partials
+                });
                 const rendered = await LiquidEngine.parseAndRender(fixedHtml, {
                     isDevMode: 'true',
                     thisPage,
@@ -162,10 +163,6 @@ class LocalHtmlGenerator {
                         filePath: `${BUCKET_GENERATED_DIR}/${thisPage.id}/styles.css`
                     }
                 };
-                thisPage.article = await LiquidEngine.parseAndRender(marked.parse(markdown, {async: false}) as string, {
-                    site,
-                    thisPage
-                });
                 const partials: Record<string, string> = {};
                 for (const sitePartial of Object.entries(site.partials)) {
                     partials[sitePartial[0]] = await LiquidEngine.parseAndRender(sitePartial[1], {
@@ -179,6 +176,11 @@ class LocalHtmlGenerator {
                         thisPage
                     })
                     : '';
+                thisPage.article = await LiquidEngine.parseAndRender(marked.parse(markdown, {async: false}) as string, {
+                    site,
+                    thisPage,
+                    partials
+                });
                 const stylesUrl = `/${result.styles.filePath}`;
                 result.html.fileBody = await LiquidEngine.parseAndRender(html, {
                     site,

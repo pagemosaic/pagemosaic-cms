@@ -27,6 +27,8 @@ It simplifies the process of creating, managing, and publishing content online w
 * `Technologies Used:` Developed with React and TailwindCSS. React for building the user interface, TailwindCSS for styling.
 * `User Interface Components:` Includes various components for managing system features and AWS resources.
 
+[Check out the Page Mosaic website for more info.](https://pagemosaic.com)
+
 ## Setting up AWS
 
 ### Create an administrative user on AWS and configure AWS CLI locally
@@ -93,6 +95,8 @@ pnpm destroy-platform
 
 <br/>
 <br/>
+
+[Check out the Page Mosaic website for more info.](https://pagemosaic.com)
 
 ## License
 
