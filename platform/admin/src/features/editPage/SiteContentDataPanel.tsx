@@ -9,7 +9,7 @@ import {
     LucideChevronDown,
     LucideCopy,
     LucideAlertTriangle,
-    LucideChevronRight
+    LucideChevronRight, LucideLayoutList, LucideListCollapse
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -42,7 +42,7 @@ import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
-    DropdownMenuItem
+    DropdownMenuItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {ContentDataBlockAddButton} from '@/features/editPage/ContentDataBlockAddButton';
@@ -116,27 +116,63 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    let contentDataConfigClass: ContentDataConfigClass = {};
-    let contentData: ContentData = [];
     let contentDataError = '';
-    let groups: Array<string> = ['Default'];
-    if (SiteContent.SiteContentDataConfig.S) {
+
+    let contentData: ContentData = useMemo(() => {
+        let result: ContentData = [];
         try {
-            contentDataConfigClass = JSON.parse(SiteContent.SiteContentDataConfig.S);
-            for (const [_, configClass] of Object.entries(contentDataConfigClass)) {
-                if (configClass.group && !groups.includes(configClass.group)) {
-                    groups.push(configClass.group);
+            result = JSON.parse(SiteContent.SiteContentData.S);
+        } catch (e: any) {
+            contentDataError = 'Error parsing the content data values.';
+        }
+        return result;
+    }, [SiteContent.SiteContentData]);
+
+    let contentDataConfigClass: ContentDataConfigClass = useMemo(() => {
+        let result: ContentDataConfigClass = {};
+        if (SiteContent.SiteContentDataConfig.S) {
+            try {
+                result = JSON.parse(SiteContent.SiteContentDataConfig.S);
+            } catch (e: any) {
+                contentDataError = 'Error parsing the content data configuration. Please double check the data config settings.';
+            }
+        }
+        return result;
+    }, [SiteContent.SiteContentDataConfig]);
+
+    let groups: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = useMemo(() => {
+        let result: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = [];
+        const blocksMap: Record<string, {groupKey: string; blockLabel: string;}> = {};
+        let groupKey: string;
+        for (const [key, configClass] of Object.entries(contentDataConfigClass)) {
+            groupKey = configClass.group || 'Default';
+            blocksMap[key] = { groupKey, blockLabel: configClass.label };
+            let foundGroup = result.find(g => g.groupKey === groupKey);
+            if (!foundGroup) {
+                foundGroup = {
+                    groupKey,
+                    blocks: []
+                };
+                result.push(foundGroup);
+            }
+        }
+        let contentDataItemIndex = 0;
+        for (const contentDataItem of contentData) {
+            const foundBlock = blocksMap[contentDataItem.key];
+            if (foundBlock) {
+                let foundGroup = result.find(g => g.groupKey === foundBlock.groupKey);
+                if (foundGroup) {
+                    const blockKey = `block_${contentDataItemIndex}_${contentDataItem.key}`;
+                    foundGroup.blocks.push({
+                        label: foundBlock.blockLabel,
+                        blockKey
+                    });
                 }
             }
-        } catch (e: any) {
-            contentDataError = 'Error parsing the content data configuration. Please double check the data config settings.';
+            contentDataItemIndex++;
         }
-    }
-    try {
-        contentData = JSON.parse(SiteContent.SiteContentData.S);
-    } catch (e: any) {
-        contentDataError = 'Error parsing the content data values.';
-    }
+        return result;
+    }, [contentDataConfigClass, contentData]);
 
     const selectedBlockClasses: Record<string, ContentDataBlockClass> = useMemo(() => {
         let resultMap: Record<string, ContentDataBlockClass> = {};
@@ -158,9 +194,21 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
         contentDataItemIndex++;
     }
-    // const groupedContentData: ContentData = contentData.filter(i => {
-    //     return !!selectedBlockClasses[i.key];
-    // });
+
+    const handleSelectGroup = (groupKey: string, blockKey?: string) => {
+        saveSelectedGroup(groupKey)
+        if (blockKey) {
+            toggleBlock(blockKey, {doAdd: true});
+            setTimeout(() => {
+                if (scrollAreaRef.current) {
+                    const foundBlockTitleElement = document.getElementById(blockKey);
+                    if (foundBlockTitleElement) {
+                        scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
+                    }
+                }
+            }, 300);
+        }
+    };
 
     const toggleBlock = (blockKey: string, options?: {doRemove?: boolean; doAdd?: boolean}) => {
         const newExpandedBlocks = {...expandedBlocks};
@@ -172,6 +220,16 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             newExpandedBlocks[blockKey] = !newExpandedBlocks[blockKey];
         }
         setExpandedBlocks(newExpandedBlocks);
+    };
+
+    const handleCollapseBlocks = () => {
+        let foundGroup = groups.find(g => g.groupKey === selectedGroup);
+        if (foundGroup && foundGroup.blocks.length > 0) {
+            for (const block of foundGroup.blocks) {
+                delete expandedBlocks[block.blockKey];
+            }
+            setExpandedBlocks({...expandedBlocks});
+        }
     };
 
     const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
@@ -200,7 +258,9 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            const newIndex = groupedContentDataIndexOffset[groupedBlockIndex] + increment;
+            const newIndex = Object.keys(groupedContentDataIndexOffset).length > 0
+                ? groupedContentDataIndexOffset[groupedBlockIndex] + increment
+                : 0;
             prevContentData.splice(newIndex, 0, {
                 key: code,
                 fields: {}
@@ -316,6 +376,16 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
+            const fieldKey = `${fieldPath}.${fieldIndex}`;
+            setCollapsedFields({...collapsedFields, [fieldKey]: true});
+            setTimeout(() => {
+                if (scrollAreaRef.current) {
+                    const foundElement = document.getElementById(fieldKey);
+                    if (foundElement) {
+                        scrollAreaRef.current.scrollTo({top: foundElement.offsetTop, behavior: 'smooth'});
+                    }
+                }
+            }, 300);
         }
     };
 
@@ -333,6 +403,9 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 saveSiteEntry(siteEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
+                const fieldKey = `${fieldPath}.${fieldIndex}`;
+                delete collapsedFields[fieldKey];
+                setCollapsedFields({...collapsedFields});
             }
         }
     };
@@ -349,6 +422,20 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 saveSiteEntry(siteEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
+                const fieldKey = `${fieldPath}.${newFieldIndex}`;
+                const oldFieldKey = `${fieldPath}.${fieldIndex}`;
+                const collapsedNewField = collapsedFields[fieldKey];
+                collapsedFields[fieldKey] = collapsedFields[oldFieldKey];
+                collapsedFields[oldFieldKey] = collapsedNewField;
+                setCollapsedFields({...collapsedFields});
+                setTimeout(() => {
+                    if (scrollAreaRef.current) {
+                        const foundElement = document.getElementById(fieldKey);
+                        if (foundElement) {
+                            scrollAreaRef.current.scrollTo({top: foundElement.offsetTop, behavior: 'smooth'});
+                        }
+                    }
+                }, 300);
             }
         }
     };
@@ -575,29 +662,54 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                     <DropdownMenuTrigger asChild>
                                         <Button
                                             size="sm"
-                                            variant="default"
+                                            variant="outline"
                                             disabled={isInAction || groups.length <= 1}
                                             className="justify-start"
                                         >
-                                            {selectedGroup}
+                                            <LucideLayoutList className="w-4 h-4 mr-2"/>
+                                            <span className="text-left max-w-[300px] line-clamp-1">{selectedGroup}</span>
                                             <LucideChevronDown className="w-4 h-4 ml-2"/>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start">
                                         {groups.map((groupItem, groupIdx) => {
+                                            if (groupItem.blocks.length > 0) {
+                                                return (
+                                                    <DropdownMenuSub key={groupItem.groupKey}>
+                                                        <DropdownMenuSubTrigger>
+                                                            <span className="max-w-[300px] line-clamp-1">{groupItem.groupKey}</span>
+                                                        </DropdownMenuSubTrigger>
+                                                        <DropdownMenuPortal>
+                                                            <DropdownMenuSubContent>
+                                                                {groupItem.blocks.map((blockItem, blockItemIdx) => {
+                                                                    return (
+                                                                        <DropdownMenuItem
+                                                                            key={blockItem.blockKey}
+                                                                            onSelect={() => handleSelectGroup(groupItem.groupKey, blockItem.blockKey)}
+                                                                        >
+                                                                            <span className="text-left max-w-[300px] line-clamp-1">{blockItem.label}</span>
+                                                                            <span className="text-muted-foreground ml-2">#{blockItemIdx + 1}</span>
+                                                                        </DropdownMenuItem>
+                                                                    );
+                                                                })}
+                                                            </DropdownMenuSubContent>
+                                                        </DropdownMenuPortal>
+                                                    </DropdownMenuSub>
+                                                );
+                                            }
                                             return (
                                                 <DropdownMenuItem
-                                                    key={groupItem}
-                                                    onSelect={() => saveSelectedGroup(groupItem)}
+                                                    key={groupItem.groupKey}
+                                                    onSelect={() => handleSelectGroup(groupItem.groupKey)}
                                                 >
-                                                    <div>{groupItem}</div>
+                                                    <span className="max-w-[300px] line-clamp-1">{groupItem.groupKey}</span>
                                                 </DropdownMenuItem>
                                             );
                                         })}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                                 <div>
-                                    <p className="text-muted-foreground text-sm">blocks group</p>
+                                    <ButtonAction Icon={LucideListCollapse} variant="ghost" size="sm" onClick={handleCollapseBlocks} title="Collapse all blocks" />
                                 </div>
                             </div>
                             <div className="flex flex-row items-center gap-1">
