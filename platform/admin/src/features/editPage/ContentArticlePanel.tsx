@@ -40,6 +40,7 @@ export function ContentArticlePanel(props: ContentArticlePanelProps) {
             Entry.EntryUpdateDate.N = Date.now().toString();
             Article.PageArticleData.S = newValue || '';
             setSessionState(pageSessionStateKey, pageEntry);
+            setSessionState('thereAreChanges', true);
         }
     }, 800);
 

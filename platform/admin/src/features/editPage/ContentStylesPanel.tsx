@@ -33,6 +33,7 @@ export function ContentStylesPanel(props: ContentStylesPanelProps) {
             templateEntry.Styles = newValue;
             set<string>(templateEntry, 'Entry.EntryUpdateDate.N', Date.now().toString());
             setSessionState(templateSessionStateKey, templateEntry);
+            setSessionState('thereAreChanges', true);
         }
     }, 800);
 

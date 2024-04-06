@@ -33,6 +33,7 @@ export function SiteStylesPanel(props: SiteStylesPanelProps) {
             siteEntry.SiteStyles = newValue;
             set<string>(siteEntry, 'Entry.EntryUpdateDate.N', Date.now().toString());
             setSessionState(siteSessionStateKey, siteEntry);
+            setSessionState('thereAreChanges', true);
         }
     }, 800);
 

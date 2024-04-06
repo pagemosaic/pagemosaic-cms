@@ -20,10 +20,8 @@ export function IFrameToolbox(props: IFrameToolboxProps) {
     }
 
     useEffect(() => {
-        console.log('Bind listener IFRAME_RESIZE_EVENT');
         window.addEventListener(IFRAME_RESIZE_EVENT, handleIFrameWidthChange, false);
         return () => {
-            console.log('Unbind listener IFRAME_RESIZE_EVENT');
             window.removeEventListener(IFRAME_RESIZE_EVENT, handleIFrameWidthChange, false);
         };
     }, []);

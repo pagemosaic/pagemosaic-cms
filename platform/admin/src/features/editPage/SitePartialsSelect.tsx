@@ -2,7 +2,7 @@ import React, {useState, useMemo, useRef, useEffect} from 'react';
 import {LucidePlusCircle, LucideX, LucideTrash2, LucideSave, LucideChevronDown} from 'lucide-react';
 import set from 'lodash-es/set';
 import {DI_SiteEntry} from 'infra-common/data/DocumentItem';
-import {useSessionState} from '@/utils/localStorage';
+import {useSessionState, setSessionState} from '@/utils/localStorage';
 import {DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem} from '@/components/ui/dropdown-menu';
 import {ButtonAction} from '@/components/utils/ButtonAction';
 import {AsyncStatus} from '@/components/utils/AsyncStatusProvider';
@@ -53,6 +53,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                     set<string>(siteEntry, 'Entry.EntryUpdateDate.N', Date.now().toString());
                     setSiteEntry(siteEntry);
                     setSelectedPartialIndex(siteEntry.SitePartials.length - 1);
+                    setSessionState('thereAreChanges', true);
                     setOpenDialog(false);
                 }
             }
@@ -71,6 +72,7 @@ export function SitePartialsSelect(props: SitePartialsSelectProps) {
                 set<string>(siteEntry, 'Entry.EntryUpdateDate.N', Date.now().toString());
                 setSelectedPartialIndex(siteEntry.SitePartials.length - 1);
                 setSiteEntry(siteEntry);
+                setSessionState('thereAreChanges', true);
                 setOpenDeleteDialog(false);
             }
         }

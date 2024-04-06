@@ -74,9 +74,9 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         saveValue: saveSelectedGroup
     } = useSessionState<string>('selectedSiteDataGroup');
     const {
-        value: collapsedBlocks = {},
-        saveValue: setCollapsedBlocks
-    } = useSessionState<Record<string, boolean>>('siteContentCollapsedBlocks');
+        value: expandedBlocks = {},
+        saveValue: setExpandedBlocks
+    } = useSessionState<Record<string, boolean>>('siteContentExpandedBlocks');
     const {
         value: collapsedFields = {},
         saveValue: setCollapsedFields
@@ -162,10 +162,22 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
     //     return !!selectedBlockClasses[i.key];
     // });
 
+    const toggleBlock = (blockKey: string, options?: {doRemove?: boolean; doAdd?: boolean}) => {
+        const newExpandedBlocks = {...expandedBlocks};
+        if (options?.doRemove) {
+            delete newExpandedBlocks[blockKey];
+        } else if (options?.doAdd) {
+            newExpandedBlocks[blockKey] = true;
+        } else {
+            newExpandedBlocks[blockKey] = !newExpandedBlocks[blockKey];
+        }
+        setExpandedBlocks(newExpandedBlocks);
+    };
+
     const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        setCollapsedBlocks({...collapsedBlocks, [blockKey]: !collapsedBlocks[blockKey]});
+        toggleBlock(blockKey);
     };
 
     const handleToggleField = (fieldKey: string) => () => {
@@ -200,10 +212,12 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             SiteContent.SiteContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
+            const blockKey = `block_${newIndex}_${code}`;
+            toggleBlock(blockKey, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(`block_${newIndex}_${code}`);
+                    const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -223,10 +237,12 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
+            const blockKey = `block_${newIndex}_${newBlockContent.key}`;
+            toggleBlock(blockKey, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(`block_${newIndex}_${newBlockContent.key}`);
+                    const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -241,7 +257,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            prevContentData.splice(groupedContentDataIndexOffset[groupBlockIndex], 1);
+            const blockIndex = groupedContentDataIndexOffset[groupBlockIndex];
+            const blockContent: ContentDataBlock = cloneDeep(prevContentData[blockIndex]);
+            const blockKey = `block_${blockIndex}_${blockContent.key}`;
+            toggleBlock(blockKey, {doRemove: true});
+            prevContentData.splice(blockIndex, 1);
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
@@ -253,11 +273,29 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             let prevContentData = JSON.parse(SiteContent.SiteContentData.S);
+            const selectedBlockIndex = groupedContentDataIndexOffset[groupBlockIndex];
+            const targetBlockIndex = groupedContentDataIndexOffset[newGroupBlockIndex];
+            const selectedBlockKey = `block_${selectedBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
+            const targetBlockKey = `block_${targetBlockIndex}_${prevContentData[targetBlockIndex].key}`;
+            const selectedBlockExpanded = expandedBlocks[selectedBlockKey];
+            const targetBlockExpanded = expandedBlocks[targetBlockKey];
+            const newBlockKey = `block_${targetBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
+            expandedBlocks[`block_${selectedBlockIndex}_${prevContentData[targetBlockIndex].key}`] = targetBlockExpanded;
+            expandedBlocks[newBlockKey] = selectedBlockExpanded;
+            setExpandedBlocks({...expandedBlocks});
             prevContentData = arrayMove(prevContentData, groupedContentDataIndexOffset[groupBlockIndex], groupedContentDataIndexOffset[newGroupBlockIndex]);
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
+            setTimeout(() => {
+                if (scrollAreaRef.current) {
+                    const foundBlockTitleElement = document.getElementById(newBlockKey);
+                    if (foundBlockTitleElement) {
+                        scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
+                    }
+                }
+            }, 300);
         }
     };
 
@@ -632,7 +670,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                             <div
                                                                 id={blockId}
                                                                 key={blockId}
-                                                                className={cn('flex flex-col gap-4', {'pb-4': !collapsedBlocks[blockId]})}
+                                                                className={cn('flex flex-col gap-4', {'pb-4': expandedBlocks[blockId]})}
                                                             >
                                                                 <div
                                                                     className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent cursor-pointer", {
@@ -643,10 +681,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                 >
                                                                     <div
                                                                         className="flex flex-row gap-2 items-center justify-center flex-grow">
-                                                                        {collapsedBlocks[blockId]
-                                                                            ? (<LucideChevronRight
+                                                                        {expandedBlocks[blockId]
+                                                                            ? (<LucideChevronDown
                                                                                 className="text-muted-foreground w-4 h-4"/>)
-                                                                            : (<LucideChevronDown
+                                                                            : (<LucideChevronRight
                                                                                 className="text-muted-foreground w-4 h-4"/>)
                                                                         }
                                                                         <p className="text-sm text-muted-foreground font-medium line-clamp-1">
@@ -693,7 +731,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                {!collapsedBlocks[blockId] && (
+                                                                {expandedBlocks[blockId] && (
                                                                     <div className="pl-6 flex flex-col gap-6">
                                                                         {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
                                                                             const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;

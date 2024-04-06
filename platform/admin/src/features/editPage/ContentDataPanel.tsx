@@ -77,9 +77,9 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         saveValue: saveSelectedDataGroups
     } = useSessionState<Record<string, string>>('selectedDataGroups');
     const {
-        value: collapsedBlocks = {},
-        saveValue: setCollapsedBlocks
-    } = useSessionState<Record<string, Record<string, boolean>>>('pageContentCollapsedBlocks');
+        value: expandedBlocks = {},
+        saveValue: setExpandedBlocks
+    } = useSessionState<Record<string, Record<string, boolean>>>('pageContentExpandedBlocks');
     const {
         value: collapsedFields = {},
         saveValue: setCollapsedFields
@@ -170,12 +170,22 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         contentDataItemIndex++;
     }
 
+    const toggleBlock = (blockKey: string, options?: {doRemove?: boolean; doAdd?: boolean;}) => {
+        let pageExpandedBlocks = expandedBlocks[pageId] || {};
+        if (options?.doRemove) {
+            delete pageExpandedBlocks[blockKey];
+        } else if (options?.doAdd) {
+            pageExpandedBlocks[blockKey] = true;
+        } else {
+            pageExpandedBlocks[blockKey] = !pageExpandedBlocks[blockKey];
+        }
+        setExpandedBlocks({...expandedBlocks, [pageId]: pageExpandedBlocks});
+    };
+
     const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        let pageCollapsedBlocks = collapsedBlocks[pageId] || {};
-        pageCollapsedBlocks[blockKey] = !pageCollapsedBlocks[blockKey];
-        setCollapsedBlocks({...collapsedBlocks, [pageId]: pageCollapsedBlocks});
+        toggleBlock(blockKey);
     };
 
     const handleToggleField = (fieldKey: string) => () => {
@@ -212,10 +222,12 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             Content.PageContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
+            const blockKey = `block_${newIndex}_${code}`;
+            toggleBlock(blockKey, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(`block_${newIndex}_${code}`);
+                    const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -235,10 +247,12 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
+            const blockKey = `block_${newIndex}_${newBlockContent.key}`;
+            toggleBlock(blockKey, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(`block_${newIndex}_${newBlockContent.key}`);
+                    const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -253,7 +267,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             const prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            prevContentData.splice(groupedContentDataIndexOffset[groupedBlockIndex], 1);
+            const blockIndex = groupedContentDataIndexOffset[groupedBlockIndex];
+            const blockContent: ContentDataBlock = cloneDeep(prevContentData[blockIndex]);
+            const blockKey = `block_${blockIndex}_${blockContent.key}`;
+            toggleBlock(blockKey, {doRemove: true});
+            prevContentData.splice(blockIndex, 1);
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
@@ -265,11 +283,30 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             let prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            prevContentData = arrayMove(prevContentData, groupedContentDataIndexOffset[groupedBlockIndex], groupedContentDataIndexOffset[newGroupedBlockIndex]);
+            const selectedBlockIndex = groupedContentDataIndexOffset[groupedBlockIndex];
+            const targetBlockIndex = groupedContentDataIndexOffset[newGroupedBlockIndex];
+            const selectedBlockKey = `block_${selectedBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
+            const targetBlockKey = `block_${targetBlockIndex}_${prevContentData[targetBlockIndex].key}`;
+            let pageExpandedBlocks = expandedBlocks[pageId] || {};
+            const selectedBlockExpanded = pageExpandedBlocks[selectedBlockKey];
+            const targetBlockExpanded = pageExpandedBlocks[targetBlockKey];
+            const newBlockKey = `block_${targetBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
+            pageExpandedBlocks[`block_${selectedBlockIndex}_${prevContentData[targetBlockIndex].key}`] = targetBlockExpanded;
+            pageExpandedBlocks[newBlockKey] = selectedBlockExpanded;
+            setExpandedBlocks({...expandedBlocks, [pageId]: pageExpandedBlocks});
+            prevContentData = arrayMove(prevContentData, selectedBlockIndex, targetBlockIndex);
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
+            setTimeout(() => {
+                if (scrollAreaRef.current) {
+                    const foundBlockTitleElement = document.getElementById(newBlockKey);
+                    if (foundBlockTitleElement) {
+                        scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
+                    }
+                }
+            }, 300);
         }
     };
 
@@ -528,7 +565,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const pageCollapsedBlocks = collapsedBlocks[pageId] || {};
+    const pageExpandedBlocks = expandedBlocks[pageId] || {};
 
     return (
         <Card className="absolute top-0 right-0 left-0 bottom-0 overflow-hidden">
@@ -647,7 +684,8 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                             <div
                                                                 id={blockId}
                                                                 key={blockId}
-                                                                className={cn('flex flex-col gap-4', {'pb-4': !pageCollapsedBlocks[blockId]})}
+                                                                // className={cn('flex flex-col gap-4', {'pb-4': !pageCollapsedBlocks[blockId]})}
+                                                                className={cn('flex flex-col gap-4', {'pb-4': pageExpandedBlocks[blockId]})}
                                                             >
                                                                 <div
                                                                     className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 cursor-pointer rounded-[6px] border-[1px] border-transparent", {
@@ -657,9 +695,9 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                     onClick={handleToggleBlock(blockId)}
                                                                 >
                                                                     <div className="flex flex-row gap-2 items-center justify-center flex-grow">
-                                                                        {pageCollapsedBlocks[blockId]
-                                                                            ? (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
-                                                                            : (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                        {pageExpandedBlocks[blockId]
+                                                                            ? (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
+                                                                            : (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
                                                                         }
                                                                         <p className="text-sm text-muted-foreground font-medium line-clamp-1">
                                                                             {foundBlockClass.label}
@@ -705,7 +743,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                {!pageCollapsedBlocks[blockId] && (
+                                                                {pageExpandedBlocks[blockId] && (
                                                                     <div className="pl-6 flex flex-col gap-6">
                                                                         {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
                                                                             const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;

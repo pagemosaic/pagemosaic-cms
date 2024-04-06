@@ -78,9 +78,12 @@ function traversePagesNodesForPreviewRecords(pagesNode: PagesNode, pagesPreviewR
                     break;
                 }
             } else {
-                console.log('Look for the main page');
                 foundPageInPreviewRecords = templateItem.pages.find(i => i.isMainPage);
                 if (foundPageInPreviewRecords) {
+                    pagesPreviewRecords[pagesNode.path] = {
+                        pageId: foundPageInPreviewRecords.pageId,
+                        templateId: foundPageInPreviewRecords.templateId
+                    }
                     break;
                 }
             }

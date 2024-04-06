@@ -31,7 +31,6 @@ export function PreviewPanel(props: PreviewPanelProps) {
             }
             (async () => {
                 const {html} = await pageDataSingleton.getPreviewHtml({pageEntry, templateEntry}, {siteEntry});
-                console.log('Reload src doc');
                 if (iFrameRef.current) {
                     iFrameRef.current.loadSrcDoc(html);
                 }
@@ -56,7 +55,6 @@ export function PreviewPanel(props: PreviewPanelProps) {
     }, [pageEntry, templateEntry, siteEntry, defaultWebsiteUrl, autoReloadPreview]);
 
     useEffect(() => {
-        console.log('Rebind the reload preview');
         window.addEventListener(RELOAD_PREVIEW_EVENT, reloadPreview, false);
         return () => {
             window.removeEventListener(RELOAD_PREVIEW_EVENT, reloadPreview, false);
