@@ -56,7 +56,7 @@ export function PagePreviewPanel(props: PagePreviewPanelProps) {
                 <div>
                     <p ref={titleRef} className="line-clamp-1 text-sm font-semibold text-muted-foreground"></p>
                 </div>
-                <IFrameToolbox/>
+                <IFrameToolbox key="pagesPreview"/>
             </div>
             <div className="flex-grow relative w-full h-full">
                 <IFrameExtended

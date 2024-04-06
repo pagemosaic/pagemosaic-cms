@@ -4,7 +4,7 @@ import {getIdFromPK} from 'infra-common/utility/database';
 import {cloneDeep} from 'infra-common/utility/objectUtils';
 import {PageDataSessionKeys} from '@/data/PageData';
 import {HistoryDataItem, historyDataSingleton} from '@/data/HistoryData';
-import {getSessionState} from '@/utils/localStorage';
+import {getSessionState, setSessionState} from '@/utils/localStorage';
 
 export type HistoryDataProviderContextProps = {
     putIntoHistory: (historyRecord: HistoryDataItem) => void;
@@ -32,6 +32,7 @@ export function HistoryDataProvider(props: HistoryDataProviderProps) {
                 siteEntry: siteEntry ? cloneDeep(siteEntry) : undefined,
                 templateEntry: templateEntry ? cloneDeep(templateEntry) : undefined
             });
+            setSessionState('thereAreChanges', true);
         }
     };
 

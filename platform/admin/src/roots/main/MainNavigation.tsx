@@ -22,11 +22,13 @@ import {
     DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
+import {useSessionState} from '@/utils/localStorage';
 
 export function MainNavigation() {
     const navigate = useNavigate();
     const {platformWebsiteUrl} = useSystemInfo();
     const {showDialog} = useRestore();
+    const {value: thereAreChanges} = useSessionState<boolean>('thereAreChanges');
     const publicUrl = platformWebsiteUrl?.entryPointDomainAlias
         ? `https://${platformWebsiteUrl?.entryPointDomainAlias || ''}`
         : `https://${platformWebsiteUrl?.entryPointDomain || ''}`;
@@ -52,6 +54,7 @@ export function MainNavigation() {
                     label="Pages"
                     className="w-full justify-start"
                     icon={<LucideBookOpen className="h-4 w-4"/>}
+                    isError={!!thereAreChanges}
                 />
                 <NavigationButtonLink
                     to="/files"

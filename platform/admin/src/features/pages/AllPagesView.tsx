@@ -72,9 +72,17 @@ function traversePagesNodesForPreviewRecords(pagesNode: PagesNode, pagesPreviewR
     let foundPageInPreviewRecords = undefined;
     for (const templateItem of pagesNode.templates) {
         if (templateItem.pages && templateItem.pages.length > 0) {
-            foundPageInPreviewRecords = templateItem.pages.find(i => i.pageId === pagesPreviewRecords[pagesNode.path]?.pageId);
-            if (foundPageInPreviewRecords) {
-                break;
+            if (pagesPreviewRecords[pagesNode.path]) {
+                foundPageInPreviewRecords = templateItem.pages.find(i => i.pageId === pagesPreviewRecords[pagesNode.path].pageId);
+                if (foundPageInPreviewRecords) {
+                    break;
+                }
+            } else {
+                console.log('Look for the main page');
+                foundPageInPreviewRecords = templateItem.pages.find(i => i.isMainPage);
+                if (foundPageInPreviewRecords) {
+                    break;
+                }
             }
         }
     }

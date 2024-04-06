@@ -4,8 +4,7 @@ import React, {
     RefAttributes,
     useEffect,
     useImperativeHandle,
-    useRef,
-    useCallback
+    useRef
 } from 'react';
 import {useSessionState} from '@/utils/localStorage';
 
@@ -53,7 +52,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
     const frameWindow = useRef<HTMLIFrameElement>(null);
     const scrollTopRef = useRef<number>(0);
 
-    const handleWindowResize = useCallback(() => {
+    const handleWindowResize = () => {
         if (frameWindow.current) {
             window.dispatchEvent(new CustomEvent<IFrameExtendedEvent>(IFRAME_RESIZE_EVENT, {
                 detail: {
@@ -61,7 +60,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
                 }
             }));
         }
-    }, [frameWindow.current]);
+    };
 
     const handleWindowScroll = () => {
         if (frameWindow.current?.contentWindow) {
@@ -77,6 +76,17 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
             } else {
                 frameWindow.current.contentWindow.scrollTo({top: 0});
             }
+            frameWindow.current.contentWindow.addEventListener('resize', handleWindowResize);
+            const doc = frameWindow.current.contentWindow.document;
+            if (doc) {
+                // Add target="_blank" attribute to each <a> element
+                const anchorElements = doc.querySelectorAll('a');
+                anchorElements.forEach(anchor => {
+                    anchor.setAttribute('target', '_blank');
+                });
+            } else {
+                console.error('The iFrame\'s content window document is null.');
+            }
         }
     };
 
@@ -85,6 +95,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
             if (keepScrollPos) {
                 frameWindow.current.contentWindow.removeEventListener('scroll', handleWindowScroll);
             }
+            frameWindow.current.contentWindow.removeEventListener('resize', handleWindowResize);
         }
     };
 
@@ -92,6 +103,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
         if (frameWindow.current) {
             frameWindow.current.addEventListener('load', handleLoad);
             frameWindow.current.addEventListener('beforeunload', handleUnload);
+            handleWindowResize();
         }
         return () => {
             if (frameWindow.current) {
@@ -100,20 +112,6 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
             }
         };
     }, []);
-
-    useEffect(() => {
-        if (frameWindow.current) {
-            handleWindowResize();
-        }
-        if (frameWindow.current?.contentWindow) {
-            frameWindow.current.contentWindow.addEventListener('resize', handleWindowResize);
-        }
-        return () => {
-            if (frameWindow.current?.contentWindow) {
-                frameWindow.current.contentWindow.removeEventListener('resize', handleWindowResize);
-            }
-        };
-    }, [handleWindowResize]);
 
     const reloadPage = () => {
         if (frameWindow.current) {
@@ -140,21 +138,7 @@ const IFrameExtended = forwardRef<IFrameExtendedHandle, IFrameExtendedProps>((pr
 
     const loadSrcDoc = (srcDoc: string) => {
         if (frameWindow.current && frameWindow.current.contentWindow) {
-            frameWindow.current.contentWindow.removeEventListener('resize', handleWindowResize);
-            const doc = frameWindow.current.contentWindow.document;
-            if (doc) {
-                doc.open();
-                doc.write(srcDoc);
-                doc.close();
-                // Add target="_blank" attribute to each <a> element
-                const anchorElements = doc.querySelectorAll('a');
-                anchorElements.forEach(anchor => {
-                    anchor.setAttribute('target', '_blank');
-                });
-            } else {
-                console.error('The iFrame\'s content window document is null.');
-            }
-            frameWindow.current.contentWindow.addEventListener('resize', handleWindowResize);
+            frameWindow.current.srcdoc = srcDoc;
         }
     };
 

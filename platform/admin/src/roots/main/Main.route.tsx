@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useEffect} from 'react';
 import {defer, Outlet, useLoaderData, Await, LoaderFunctionArgs, redirect} from 'react-router-dom';
 import {MainNavigation} from '@/roots/main/MainNavigation';
 import {AwaitError} from '@/components/utils/AwaitError';
@@ -10,6 +10,7 @@ import {MainSection} from '@/components/layouts/MainSection';
 import {SystemInfoDataRequest, systemInfoDataSingleton} from '@/data/SystemInfoData';
 import {SystemInfoProvider} from '@/data/useSystemInfo';
 import {RestoreProvider} from '@/roots/main/RestoreProvider';
+import {getSessionState} from '@/utils/localStorage';
 
 export interface MainRouteLoaderResponse {
     accessTokenRequest: AccessTokenRequest;
@@ -48,6 +49,20 @@ export async function mainAction({request}: LoaderFunctionArgs) {
 
 export function MainRoute() {
     const {accessTokenRequest, sysUserDataRequest, systemInfoDataRequest} = useLoaderData() as MainRouteLoaderResponse;
+
+    const handleConfirmOnExit = (e: BeforeUnloadEvent) => {
+        if (getSessionState<boolean>('thereAreChanges')) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    };
+
+    useEffect(() => {
+        window.addEventListener('beforeunload', handleConfirmOnExit);
+        return () => {
+            window.removeEventListener('beforeunload', handleConfirmOnExit);
+        };
+    }, []);
 
     const complexDefer = useMemo(() => {
         return Promise.all([accessTokenRequest, sysUserDataRequest, systemInfoDataRequest]);

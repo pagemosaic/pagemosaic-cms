@@ -175,9 +175,6 @@ class GeneratorDataSingleton {
                                 'text/css'
                             )) {
                                 invalidatePaths.push(siteFiles.styles.filePath);
-                                toast.success(
-                                    'The global styles has been published successfully'
-                                );
                             }
                             delete filesMap[siteFiles.styles.filePath];
 
@@ -187,9 +184,6 @@ class GeneratorDataSingleton {
                                 'text/xml'
                             )) {
                                 invalidatePaths.push(siteFiles.sitemap.filePath);
-                                toast.success(
-                                    'The sitemap file has been published successfully'
-                                );
                             }
                             delete filesMap[siteFiles.sitemap.filePath];
 
@@ -236,19 +230,15 @@ class GeneratorDataSingleton {
                                                     markdown: Article.PageArticleData.S || '',
                                                     html: Html || '',
                                                     styles: Styles || '',
-                                                    // siteScripts: siteFiles.siteScripts,
-                                                    // siteBodyScripts: siteFiles.siteBodyScripts,
                                                     siteStyles: siteFiles.styles.url
                                                 });
 
-                                                let uploadedFilesCounter = 0;
                                                 if (await this.uploadFile(
                                                     pageFiles.styles.fileBody,
                                                     pageFiles.styles.filePath,
                                                     'text/css'
                                                 )) {
                                                     invalidatePaths.push(pageFiles.styles.filePath);
-                                                    uploadedFilesCounter++;
                                                 }
                                                 if (await this.uploadFile(
                                                     pageFiles.html.fileBody,
@@ -256,17 +246,9 @@ class GeneratorDataSingleton {
                                                     'text/html'
                                                 )) {
                                                     invalidatePaths.push(pageFiles.html.filePath);
-                                                    uploadedFilesCounter++;
                                                 }
                                                 delete filesMap[pageFiles.styles.filePath];
                                                 delete filesMap[pageFiles.html.filePath];
-                                                if (uploadedFilesCounter > 0) {
-                                                    toast.success(
-                                                        'The page has been published successfully', {
-                                                            description: thisPage.title
-                                                        }
-                                                    );
-                                                }
                                             }
                                         }
                                     }
@@ -289,6 +271,11 @@ class GeneratorDataSingleton {
                             deletePaths: Object.keys(filesMap),
                             invalidatePaths
                         }, accessToken);
+                        if (invalidatePaths.length > 0) {
+                            toast.success(
+                                `${invalidatePaths.length} files have been published successfully.`
+                            );
+                        }
                     } catch (e: any) {
                         console.error(e);
                         toast.error('Publishing error', {

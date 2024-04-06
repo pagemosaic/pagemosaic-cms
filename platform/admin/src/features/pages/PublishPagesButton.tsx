@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useEffect} from 'react';
 import {ButtonAction} from '@/components/utils/ButtonAction';
 import {LucideGlobe, LucideRefreshCw, LucideSave} from 'lucide-react';
 import {useActionForm} from '@/components/utils/ActionFormProvider';
@@ -11,6 +11,7 @@ import {SiteDataStatus} from '@/data/SiteData';
 import {DI_PageEntry} from 'infra-common/data/DocumentItem';
 import {PageDataStatus, pageDataSingleton} from '@/data/PageData';
 import {getIdFromPK} from 'infra-common/utility/database';
+import {setSessionState} from '@/utils/localStorage';
 
 interface PublishPagesButtonProps {
     siteDataStatus: SiteDataStatus;
@@ -43,6 +44,14 @@ export function PublishPagesButton(props: PublishPagesButtonProps) {
         }
         return result;
     }, [pagesData]);
+
+    useEffect(() => {
+        if (siteDataStatus === 'changed' || changedPages.length > 0) {
+            setSessionState('thereAreChanges', true);
+        } else {
+            setSessionState('thereAreChanges', false);
+        }
+    }, [siteDataStatus, changedPages]);
 
     const handlePublishPages = (e: React.MouseEvent) => {
         e.preventDefault();
