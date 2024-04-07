@@ -42,7 +42,11 @@ import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
-    DropdownMenuItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent
+    DropdownMenuItem,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {getIdFromPK} from 'infra-common/utility/database';
@@ -79,11 +83,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
     const {
         value: expandedBlocks = {},
         saveValue: setExpandedBlocks
-    } = useSessionState<Record<string, Record<string, boolean>>>('pageContentExpandedBlocks');
+    } = useSessionState<Record<string, Array<boolean>>>('pageContentExpandedBlocks');
     const {
         value: collapsedFields = {},
         saveValue: setCollapsedFields
-    } = useSessionState<Record<string, Record<string, boolean>>>('pageContentCollapsedFields');
+    } = useSessionState<Record<string, Record<string, Array<boolean>>>>('pageContentCollapsedFields');
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -146,8 +150,8 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         return result;
     }, [TemplateContent?.PageContentDataConfig]);
 
-    let groups: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = useMemo(() => {
-        let result: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = [];
+    let groups: Array<{groupKey: string; blocks: Array<{label: string; blockIndex: number;}>}> = useMemo(() => {
+        let result: Array<{groupKey: string; blocks: Array<{label: string; blockIndex: number;}>}> = [];
         const blocksMap: Record<string, {groupKey: string; blockLabel: string;}> = {};
         let groupKey: string;
         for (const [key, configClass] of Object.entries(contentDataConfigClass)) {
@@ -168,10 +172,9 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             if (foundBlock) {
                 let foundGroup = result.find(g => g.groupKey === foundBlock.groupKey);
                 if (foundGroup) {
-                    const blockKey = `block_${contentDataItemIndex}_${contentDataItem.key}`;
                     foundGroup.blocks.push({
                         label: foundBlock.blockLabel,
-                        blockKey
+                        blockIndex: contentDataItemIndex
                     });
                 }
             }
@@ -208,16 +211,16 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
 
     const pageCollapsedFields = collapsedFields[pageId] || {};
 
-    const handleSelectGroup = (groupKey: string, blockKey?: string) => {
+    const handleSelectGroup = (groupKey: string, blockIndex?: number) => {
         saveSelectedDataGroups({
             ...selectedDataGroups,
             [getIdFromPK(pageEntry?.Entry?.PK.S)]: groupKey
         })
-        if (blockKey) {
-            toggleBlock(blockKey, {doAdd: true});
+        if (blockIndex !== undefined) {
+            toggleBlock(blockIndex, {doExpand: true});
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(blockKey);
+                    const foundBlockTitleElement = document.getElementById(`block_${blockIndex}`);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -226,45 +229,50 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const toggleBlock = (blockKey: string, options?: {doRemove?: boolean; doAdd?: boolean;}) => {
-        let pageExpandedBlocks = expandedBlocks[pageId] || {};
-        if (options?.doRemove) {
-            delete pageExpandedBlocks[blockKey];
-        } else if (options?.doAdd) {
-            pageExpandedBlocks[blockKey] = true;
+    const toggleBlock = (blockIndex: number, options?: {doExpand?: boolean; doRemove?: boolean; doAdd?: boolean; doMove?: boolean; newBlockIndex?: number;}) => {
+        let pageExpandedBlocks = [...(expandedBlocks[pageId] || [])];
+        if (options?.doAdd) {
+            pageExpandedBlocks.splice(blockIndex, 0, true);
+        } else if (options?.doExpand) {
+            pageExpandedBlocks[blockIndex] = true;
+        } else if (options?.doRemove) {
+            pageExpandedBlocks.splice(blockIndex, 1);
+        } else if (options?.doMove && options?.newBlockIndex !== undefined && options?.newBlockIndex >= 0) {
+            pageExpandedBlocks = arrayMove(pageExpandedBlocks, blockIndex, options.newBlockIndex);
         } else {
-            pageExpandedBlocks[blockKey] = !pageExpandedBlocks[blockKey];
+            pageExpandedBlocks[blockIndex] = !pageExpandedBlocks[blockIndex];
         }
         setExpandedBlocks({...expandedBlocks, [pageId]: pageExpandedBlocks});
     };
 
     const handleCollapseBlocks = () => {
-        let pageExpandedBlocks = expandedBlocks[pageId] || {};
-        let foundGroup = groups.find(g => g.groupKey === selectedGroup);
-        if (foundGroup && foundGroup.blocks.length > 0) {
-            for (const block of foundGroup.blocks) {
-                delete pageExpandedBlocks[block.blockKey];
-            }
-            setExpandedBlocks({...expandedBlocks, [pageId]: pageExpandedBlocks});
-        }
+        setExpandedBlocks({...expandedBlocks, [pageId]: []});
     };
 
-    const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
+    const handleToggleBlock = (blockIndex: number) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        toggleBlock(blockKey);
+        toggleBlock(blockIndex);
     };
 
-    const handleToggleField = (fieldKey: string, options?: {doAdd?: boolean; doRemove?: boolean}) => () => {
+    const toggleField = (fieldPath: string, fieldIndex: number, options?: {doAdd?: boolean; doRemove?: boolean; doMove?: boolean; newFieldIndex?: number}) => {
         let pageCollapsedFields = collapsedFields[pageId] || {};
+        let collapsedIndexes = [...(pageCollapsedFields[fieldPath] || [])];
         if (options?.doAdd) {
-            pageCollapsedFields[fieldKey] = true;
+            collapsedIndexes.splice(fieldIndex, 0, false);
         } else if (options?.doRemove) {
-            delete pageCollapsedFields[fieldKey];
+            collapsedIndexes.splice(fieldIndex, 1);
+        } else if (options?.doMove && options?.newFieldIndex !== undefined && options?.newFieldIndex >= 0) {
+            collapsedIndexes = arrayMove(collapsedIndexes, fieldIndex, options.newFieldIndex);
         } else {
-            pageCollapsedFields[fieldKey] = !pageCollapsedFields[fieldKey];
+            collapsedIndexes[fieldIndex] = !collapsedIndexes[fieldIndex];
         }
+        pageCollapsedFields[fieldPath] = collapsedIndexes;
         setCollapsedFields({...collapsedFields, [pageId]: pageCollapsedFields});
+    };
+
+    const handleToggleField = (fieldPath: string, fieldIndex: number, options?: {doAdd?: boolean; doRemove?: boolean; doMove?: boolean; newFieldIndex?: number}) => () => {
+        toggleField(fieldPath, fieldIndex, options);
     };
 
     const handleContentDataChange = (newContentData: ContentData, doRefresh?: boolean) => {
@@ -279,13 +287,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const handleAddNewBlock = (code: string, groupedBlockIndex: number, increment: number = 0) => {
+    const handleAddNewBlock = (code: string, blockIndex: number, increment: number = 0) => {
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             const prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            const newIndex = Object.keys(groupedContentDataIndexOffset).length > 0
-                ? groupedContentDataIndexOffset[groupedBlockIndex] + increment
-                : 0;
+            const newIndex = blockIndex + increment;
             prevContentData.splice(newIndex, 0, {
                 key: code,
                 fields: {}
@@ -297,11 +303,11 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             Content.PageContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
-            const blockKey = `block_${newIndex}_${code}`;
-            toggleBlock(blockKey, {doAdd: true});
+            toggleBlock(newIndex, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const blockKey = `block_${newIndex}`;
                     const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -311,22 +317,22 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const handleCopyBlock = (groupedBlockIndex: number) => {
+    const handleCopyBlock = (blockIndex: number) => {
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             const prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            const oldIndex = groupedContentDataIndexOffset[groupedBlockIndex];
+            const oldIndex = blockIndex;
             const newBlockContent: ContentDataBlock = cloneDeep(prevContentData[oldIndex]);
-            const newIndex = groupedContentDataIndexOffset[groupedBlockIndex] + 1;
+            const newIndex = oldIndex + 1;
             prevContentData.splice(newIndex, 0, newBlockContent);
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
-            const blockKey = `block_${newIndex}_${newBlockContent.key}`;
-            toggleBlock(blockKey, {doAdd: true});
+            toggleBlock(newIndex, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const blockKey = `block_${newIndex}`;
                     const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -336,16 +342,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const handleRemoveBlock = (groupedBlockIndex: number) => (e: React.MouseEvent) => {
+    const handleRemoveBlock = (blockIndex: number) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             const prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            const blockIndex = groupedContentDataIndexOffset[groupedBlockIndex];
-            const blockContent: ContentDataBlock = cloneDeep(prevContentData[blockIndex]);
-            const blockKey = `block_${blockIndex}_${blockContent.key}`;
-            toggleBlock(blockKey, {doRemove: true});
+            toggleBlock(blockIndex, {doRemove: true});
             prevContentData.splice(blockIndex, 1);
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
@@ -354,28 +357,21 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         }
     };
 
-    const handleMoveBlock = (groupedBlockIndex: number) => (newGroupedBlockIndex: number) => {
+    const handleMoveBlock = (blockIndex: number, newBlockIndex: number) => {
         if (Content && Entry) {
             putIntoHistory({pageEntry});
             let prevContentData: ContentData = JSON.parse(Content?.PageContentData.S);
-            const selectedBlockIndex = groupedContentDataIndexOffset[groupedBlockIndex];
-            const targetBlockIndex = groupedContentDataIndexOffset[newGroupedBlockIndex];
-            const selectedBlockKey = `block_${selectedBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
-            const targetBlockKey = `block_${targetBlockIndex}_${prevContentData[targetBlockIndex].key}`;
-            let pageExpandedBlocks = expandedBlocks[pageId] || {};
-            const selectedBlockExpanded = pageExpandedBlocks[selectedBlockKey];
-            const targetBlockExpanded = pageExpandedBlocks[targetBlockKey];
-            const newBlockKey = `block_${targetBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
-            pageExpandedBlocks[`block_${selectedBlockIndex}_${prevContentData[targetBlockIndex].key}`] = targetBlockExpanded;
-            pageExpandedBlocks[newBlockKey] = selectedBlockExpanded;
-            setExpandedBlocks({...expandedBlocks, [pageId]: pageExpandedBlocks});
+            const selectedBlockIndex = blockIndex;
+            const targetBlockIndex = newBlockIndex;
             prevContentData = arrayMove(prevContentData, selectedBlockIndex, targetBlockIndex);
+            toggleBlock(selectedBlockIndex, {doMove: true, newBlockIndex});
             Content.PageContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             setSessionState(pageSessionStateKey, pageEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const newBlockKey = `block_${targetBlockIndex}`;
                     const foundBlockTitleElement = document.getElementById(newBlockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -403,7 +399,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             setSessionState(pageSessionStateKey, pageEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             const fieldKey = `${fieldPath}.${fieldIndex}`;
-            handleToggleField(fieldKey, {doAdd: true});
+            toggleField(fieldPath, fieldIndex, {doAdd: true});
             setTimeout(() => {
                 if (scrollAreaRef.current) {
                     const foundElement = document.getElementById(fieldKey);
@@ -429,8 +425,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 setSessionState(pageSessionStateKey, pageEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
-                const fieldKey = `${fieldPath}.${fieldIndex}`;
-                handleToggleField(fieldKey, {doRemove: true});
+                toggleField(fieldPath, fieldIndex, {doRemove: true});
             }
         }
     };
@@ -447,15 +442,10 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 setSessionState(pageSessionStateKey, pageEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
-                let pageCollapsedFields = collapsedFields[pageId] || {};
-                const fieldKey = `${fieldPath}.${newFieldIndex}`;
-                const oldFieldKey = `${fieldPath}.${fieldIndex}`;
-                const collapsedNewField = pageCollapsedFields[fieldKey];
-                pageCollapsedFields[fieldKey] = pageCollapsedFields[oldFieldKey];
-                pageCollapsedFields[oldFieldKey] = collapsedNewField;
-                setCollapsedFields({...collapsedFields, [pageId]: pageCollapsedFields});
+                toggleField(fieldPath, fieldIndex, {doMove: true, newFieldIndex});
                 setTimeout(() => {
                     if (scrollAreaRef.current) {
+                        const fieldKey = `${fieldPath}.${newFieldIndex}`;
                         const foundElement = document.getElementById(fieldKey);
                         if (foundElement) {
                             scrollAreaRef.current.scrollTo({top: foundElement.offsetTop, behavior: 'smooth'});
@@ -603,6 +593,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             } else {
                 return fieldsContents.map((fieldContent, fieldContentIndex) => {
                     const fieldKey = `${fieldPath}.${fieldContentIndex}`;
+                    const collapsedIndexes = pageCollapsedFields[fieldPath] || [];
                     return (
                         <div
                             id={fieldKey}
@@ -616,7 +607,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                     field={fieldKey}
                                     help={fieldClass.help}
                                     composite={fieldClass.type === 'composite'}
-                                    collapsed={pageCollapsedFields[fieldKey]}
+                                    collapsed={collapsedIndexes[fieldContentIndex]}
                                     className="bg-white z-20 pr-2"
                                     controls={
                                         <IndexPositionBadge
@@ -627,7 +618,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                         />
                                     }
                                     nested={nested}
-                                    onToggle={handleToggleField(fieldKey)}
+                                    onToggle={handleToggleField(fieldPath, fieldContentIndex)}
                                 />
                                 <div className="static flex flex-row gap-2 items-center hover-target">
                                     <ButtonAction
@@ -646,12 +637,13 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                 <div
                                     className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[60px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                             </div>
-                            {!pageCollapsedFields[fieldKey] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
+                            {!collapsedIndexes[fieldContentIndex] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
                         </div>
                     );
                 });
             }
         } else {
+            const collapsedIndexes = pageCollapsedFields[fieldPath] || [];
             return (
                 <div key={`field_${fieldClass.key}`} className="flex flex-col gap-2">
                     <FieldLabel
@@ -660,10 +652,10 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                         help={fieldClass.help}
                         nested={nested}
                         composite={fieldClass.type === 'composite'}
-                        collapsed={pageCollapsedFields[fieldPath]}
-                        onToggle={handleToggleField(fieldPath)}
+                        collapsed={collapsedIndexes[0]}
+                        onToggle={handleToggleField(fieldPath, 0)}
                     />
-                    {!pageCollapsedFields[fieldPath] && renderControl(fieldClass, fieldPath)}
+                    {!collapsedIndexes[0] && renderControl(fieldClass, fieldPath)}
                 </div>
             );
         }
@@ -713,14 +705,14 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                         </DropdownMenuSubTrigger>
                                                         <DropdownMenuPortal>
                                                             <DropdownMenuSubContent>
-                                                                {groupItem.blocks.map((blockItem, blockItemIdx) => {
+                                                                {groupItem.blocks.map((blockItem, blockIndexInGroup) => {
                                                                     return (
                                                                         <DropdownMenuItem
-                                                                            key={blockItem.blockKey}
-                                                                            onSelect={() => handleSelectGroup(groupItem.groupKey, blockItem.blockKey)}
+                                                                            key={`block_${blockItem.blockIndex}_select`}
+                                                                            onSelect={() => handleSelectGroup(groupItem.groupKey, blockItem.blockIndex)}
                                                                         >
                                                                             <span className="text-left max-w-[300px] line-clamp-1">{blockItem.label}</span>
-                                                                            <span className="text-muted-foreground ml-2 text-xs">#{blockItemIdx + 1}</span>
+                                                                            <span className="text-muted-foreground ml-2 text-xs">#{blockIndexInGroup + 1}</span>
                                                                         </DropdownMenuItem>
                                                                     );
                                                                 })}
@@ -801,27 +793,30 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                         />
                                                     </div>
                                                 )
-                                                : groupedContentData.map((contentDataBlock: ContentDataBlock, blockIndex) => {
+                                                : groupedContentData.map((contentDataBlock: ContentDataBlock, blockIndexInGroup) => {
                                                     const foundBlockClass = selectedBlockClasses[contentDataBlock.key];
                                                     const isBlockEmpty = isContentDataBlockEmpty(contentDataBlock);
                                                     if (foundBlockClass) {
-                                                        const blockId = `block_${groupedContentDataIndexOffset[blockIndex]}_${contentDataBlock.key}`;
+                                                        const blockIndex = Object.keys(groupedContentDataIndexOffset).length > 0
+                                                            ? groupedContentDataIndexOffset[blockIndexInGroup]
+                                                            : 0;
+                                                        const blockId = `block_${blockIndex}`;
+                                                        const isBlockExpanded = pageExpandedBlocks[blockIndex];
                                                         return (
                                                             <div
                                                                 id={blockId}
                                                                 key={blockId}
-                                                                // className={cn('flex flex-col gap-4', {'pb-4': !pageCollapsedBlocks[blockId]})}
-                                                                className={cn('flex flex-col gap-4', {'pb-4': pageExpandedBlocks[blockId]})}
+                                                                className={cn('flex flex-col gap-4', {'pb-4': isBlockExpanded})}
                                                             >
                                                                 <div
                                                                     className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 cursor-pointer rounded-[6px] border-[1px] border-transparent", {
                                                                         'bg-slate-100': !isBlockEmpty,
                                                                         'bg-orange-100': isBlockEmpty
                                                                     })}
-                                                                    onClick={handleToggleBlock(blockId)}
+                                                                    onClick={handleToggleBlock(blockIndex)}
                                                                 >
                                                                     <div className="flex flex-row gap-2 items-center justify-center flex-grow">
-                                                                        {pageExpandedBlocks[blockId]
+                                                                        {isBlockExpanded
                                                                             ? (<LucideChevronDown className="text-muted-foreground w-4 h-4" />)
                                                                             : (<LucideChevronRight className="text-muted-foreground w-4 h-4" />)
                                                                         }
@@ -829,9 +824,14 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                             {foundBlockClass.label}
                                                                         </p>
                                                                         <IndexPositionBadge
-                                                                            index={blockIndex}
+                                                                            index={blockIndexInGroup}
                                                                             length={groupedContentData.length}
-                                                                            onSelect={handleMoveBlock(blockIndex)}
+                                                                            onSelect={(selectedIndexInGroup: number) => {
+                                                                                const newBlockIndex = Object.keys(groupedContentDataIndexOffset).length > 0
+                                                                                    ? groupedContentDataIndexOffset[selectedIndexInGroup]
+                                                                                    : 0;
+                                                                                handleMoveBlock(blockIndex, newBlockIndex);
+                                                                            }}
                                                                             label={foundBlockClass.label}
                                                                         />
                                                                         {isBlockEmpty && (
@@ -869,10 +869,10 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                {pageExpandedBlocks[blockId] && (
+                                                                {isBlockExpanded && (
                                                                     <div className="pl-6 flex flex-col gap-6">
                                                                         {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
-                                                                            const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;
+                                                                            const fieldPath = `${blockIndex}.fields.${fieldClass.key}`;
                                                                             return renderField(fieldClass, fieldPath);
                                                                         })}
                                                                     </div>

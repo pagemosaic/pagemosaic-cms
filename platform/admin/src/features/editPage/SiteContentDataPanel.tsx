@@ -9,7 +9,9 @@ import {
     LucideChevronDown,
     LucideCopy,
     LucideAlertTriangle,
-    LucideChevronRight, LucideLayoutList, LucideListCollapse
+    LucideChevronRight,
+    LucideLayoutList,
+    LucideListCollapse
 } from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {ActionDataFieldError} from '@/components/utils/ActionDataFieldError';
@@ -42,7 +44,11 @@ import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
-    DropdownMenuItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent
+    DropdownMenuItem,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import {Button} from '@/components/ui/button';
 import {ContentDataBlockAddButton} from '@/features/editPage/ContentDataBlockAddButton';
@@ -74,13 +80,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         saveValue: saveSelectedGroup
     } = useSessionState<string>('selectedSiteDataGroup');
     const {
-        value: expandedBlocks = {},
+        value: expandedBlocks = [],
         saveValue: setExpandedBlocks
-    } = useSessionState<Record<string, boolean>>('siteContentExpandedBlocks');
+    } = useSessionState<Array<boolean>>('siteContentExpandedBlocks');
     const {
         value: collapsedFields = {},
         saveValue: setCollapsedFields
-    } = useSessionState<Record<string, boolean>>('siteContentCollapsedFields');
+    } = useSessionState<Record<string, Array<boolean>>>('siteContentCollapsedFields');
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -140,8 +146,8 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         return result;
     }, [SiteContent.SiteContentDataConfig]);
 
-    let groups: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = useMemo(() => {
-        let result: Array<{groupKey: string; blocks: Array<{label: string; blockKey: string;}>}> = [];
+    let groups: Array<{groupKey: string; blocks: Array<{label: string; blockIndex: number;}>}> = useMemo(() => {
+        let result: Array<{groupKey: string; blocks: Array<{label: string; blockIndex: number;}>}> = [];
         const blocksMap: Record<string, {groupKey: string; blockLabel: string;}> = {};
         let groupKey: string;
         for (const [key, configClass] of Object.entries(contentDataConfigClass)) {
@@ -162,10 +168,9 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             if (foundBlock) {
                 let foundGroup = result.find(g => g.groupKey === foundBlock.groupKey);
                 if (foundGroup) {
-                    const blockKey = `block_${contentDataItemIndex}_${contentDataItem.key}`;
                     foundGroup.blocks.push({
                         label: foundBlock.blockLabel,
-                        blockKey
+                        blockIndex: contentDataItemIndex
                     });
                 }
             }
@@ -195,13 +200,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         contentDataItemIndex++;
     }
 
-    const handleSelectGroup = (groupKey: string, blockKey?: string) => {
+    const handleSelectGroup = (groupKey: string, blockIndex?: number) => {
         saveSelectedGroup(groupKey)
-        if (blockKey) {
-            toggleBlock(blockKey, {doAdd: true});
+        if (blockIndex !== undefined) {
+            toggleBlock(blockIndex, {doExpand: true});
             setTimeout(() => {
                 if (scrollAreaRef.current) {
-                    const foundBlockTitleElement = document.getElementById(blockKey);
+                    const foundBlockTitleElement = document.getElementById(`block_${blockIndex}`);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
                     }
@@ -210,36 +215,49 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    const toggleBlock = (blockKey: string, options?: {doRemove?: boolean; doAdd?: boolean}) => {
-        const newExpandedBlocks = {...expandedBlocks};
-        if (options?.doRemove) {
-            delete newExpandedBlocks[blockKey];
-        } else if (options?.doAdd) {
-            newExpandedBlocks[blockKey] = true;
+    const toggleBlock = (blockIndex: number, options?: {doExpand?: boolean; doRemove?: boolean; doAdd?: boolean; doMove?: boolean; newBlockIndex?: number;}) => {
+        let newExpandedBlocks = [...expandedBlocks];
+        if (options?.doAdd) {
+            newExpandedBlocks.splice(blockIndex, 0, true);
+        } else if (options?.doExpand) {
+            newExpandedBlocks[blockIndex] = true;
+        } else if (options?.doRemove) {
+            newExpandedBlocks.splice(blockIndex, 1);
+        } else if (options?.doMove && options?.newBlockIndex !== undefined && options?.newBlockIndex >= 0) {
+            newExpandedBlocks = arrayMove(newExpandedBlocks, blockIndex, options.newBlockIndex);
         } else {
-            newExpandedBlocks[blockKey] = !newExpandedBlocks[blockKey];
+            newExpandedBlocks[blockIndex] = !newExpandedBlocks[blockIndex];
         }
         setExpandedBlocks(newExpandedBlocks);
     };
 
     const handleCollapseBlocks = () => {
-        let foundGroup = groups.find(g => g.groupKey === selectedGroup);
-        if (foundGroup && foundGroup.blocks.length > 0) {
-            for (const block of foundGroup.blocks) {
-                delete expandedBlocks[block.blockKey];
-            }
-            setExpandedBlocks({...expandedBlocks});
-        }
+        setExpandedBlocks([]);
     };
 
-    const handleToggleBlock = (blockKey: string) => (e: React.MouseEvent) => {
+    const handleToggleBlock = (blockIndex: number) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        toggleBlock(blockKey);
+        toggleBlock(blockIndex);
     };
 
-    const handleToggleField = (fieldKey: string) => () => {
-        setCollapsedFields({...collapsedFields, [fieldKey]: !collapsedFields[fieldKey]});
+    const toggleField = (fieldPath: string, fieldIndex: number, options?: {doAdd?: boolean; doRemove?: boolean; doMove?: boolean; newFieldIndex?: number}) => {
+        let collapsedIndexes = [...(collapsedFields[fieldPath] || [])];
+        if (options?.doAdd) {
+            collapsedIndexes.splice(fieldIndex, 0, false);
+        } else if (options?.doRemove) {
+            collapsedIndexes.splice(fieldIndex, 1);
+        } else if (options?.doMove && options?.newFieldIndex !== undefined && options?.newFieldIndex >= 0) {
+            collapsedIndexes = arrayMove(collapsedIndexes, fieldIndex, options.newFieldIndex);
+        } else {
+            collapsedIndexes[fieldIndex] = !collapsedIndexes[fieldIndex];
+        }
+        collapsedFields[fieldPath] = collapsedIndexes;
+        setCollapsedFields({...collapsedFields});
+    };
+
+    const handleToggleField = (fieldPath: string, fieldIndex: number, options?: {doAdd?: boolean; doRemove?: boolean; doMove?: boolean; newFieldIndex?: number}) => () => {
+        toggleField(fieldPath, fieldIndex, options);
     };
 
     const handleContentDataChange = (newContentData: ContentData, doRefresh?: boolean) => {
@@ -254,13 +272,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    const handleAddNewBlock = (code: string, groupedBlockIndex: number, increment: number = 0) => {
+    const handleAddNewBlock = (code: string, blockIndex: number, increment: number = 0) => {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            const newIndex = Object.keys(groupedContentDataIndexOffset).length > 0
-                ? groupedContentDataIndexOffset[groupedBlockIndex] + increment
-                : 0;
+            const newIndex = blockIndex + increment;
             prevContentData.splice(newIndex, 0, {
                 key: code,
                 fields: {}
@@ -272,11 +288,11 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             SiteContent.SiteContentData.S = JSON.stringify(newContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
-            const blockKey = `block_${newIndex}_${code}`;
-            toggleBlock(blockKey, {doAdd: true});
+            toggleBlock(newIndex, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const blockKey = `block_${newIndex}`;
                     const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -286,22 +302,22 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    const handleCopyBlock = (groupedBlockIndex: number) => {
+    const handleCopyBlock = (blockIndex: number) => {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            const oldIndex = groupedContentDataIndexOffset[groupedBlockIndex];
+            const oldIndex = blockIndex;
             const newBlockContent: ContentDataBlock = cloneDeep(prevContentData[oldIndex]);
-            const newIndex = groupedContentDataIndexOffset[groupedBlockIndex] + 1;
+            const newIndex = oldIndex + 1;
             prevContentData.splice(newIndex, 0, newBlockContent);
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
-            const blockKey = `block_${newIndex}_${newBlockContent.key}`;
-            toggleBlock(blockKey, {doAdd: true});
+            toggleBlock(newIndex, {doAdd: true});
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const blockKey = `block_${newIndex}`;
                     const foundBlockTitleElement = document.getElementById(blockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -311,16 +327,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    const handleRemoveBlock = (groupBlockIndex: number) => (e: React.MouseEvent) => {
+    const handleRemoveBlock = (blockIndex: number) => (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             const prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            const blockIndex = groupedContentDataIndexOffset[groupBlockIndex];
-            const blockContent: ContentDataBlock = cloneDeep(prevContentData[blockIndex]);
-            const blockKey = `block_${blockIndex}_${blockContent.key}`;
-            toggleBlock(blockKey, {doRemove: true});
+            toggleBlock(blockIndex, {doRemove: true});
             prevContentData.splice(blockIndex, 1);
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
@@ -329,27 +342,21 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
         }
     };
 
-    const handleMoveBlock = (groupBlockIndex: number) => (newGroupBlockIndex: number) => {
+    const handleMoveBlock = (blockIndex: number, newBlockIndex: number) => {
         if (SiteContent && Entry) {
             putIntoHistory({siteEntry});
             let prevContentData = JSON.parse(SiteContent.SiteContentData.S);
-            const selectedBlockIndex = groupedContentDataIndexOffset[groupBlockIndex];
-            const targetBlockIndex = groupedContentDataIndexOffset[newGroupBlockIndex];
-            const selectedBlockKey = `block_${selectedBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
-            const targetBlockKey = `block_${targetBlockIndex}_${prevContentData[targetBlockIndex].key}`;
-            const selectedBlockExpanded = expandedBlocks[selectedBlockKey];
-            const targetBlockExpanded = expandedBlocks[targetBlockKey];
-            const newBlockKey = `block_${targetBlockIndex}_${prevContentData[selectedBlockIndex].key}`;
-            expandedBlocks[`block_${selectedBlockIndex}_${prevContentData[targetBlockIndex].key}`] = targetBlockExpanded;
-            expandedBlocks[newBlockKey] = selectedBlockExpanded;
-            setExpandedBlocks({...expandedBlocks});
-            prevContentData = arrayMove(prevContentData, groupedContentDataIndexOffset[groupBlockIndex], groupedContentDataIndexOffset[newGroupBlockIndex]);
+            const selectedBlockIndex = blockIndex;
+            const targetBlockIndex = newBlockIndex;
+            prevContentData = arrayMove(prevContentData, selectedBlockIndex, targetBlockIndex);
+            toggleBlock(selectedBlockIndex, {doMove: true, newBlockIndex});
             SiteContent.SiteContentData.S = JSON.stringify(prevContentData);
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const newBlockKey = `block_${targetBlockIndex}`;
                     const foundBlockTitleElement = document.getElementById(newBlockKey);
                     if (foundBlockTitleElement) {
                         scrollAreaRef.current.scrollTo({top: foundBlockTitleElement.offsetTop, behavior: 'smooth'});
@@ -376,10 +383,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             Entry.EntryUpdateDate.N = Date.now().toString();
             saveSiteEntry(siteEntry);
             setPageContentUniqueKey(pageContentUniqueKey + 1);
-            const fieldKey = `${fieldPath}.${fieldIndex}`;
-            setCollapsedFields({...collapsedFields, [fieldKey]: true});
+            toggleField(fieldPath, fieldIndex, {doAdd: true});
             setTimeout(() => {
                 if (scrollAreaRef.current) {
+                    const fieldKey = `${fieldPath}.${fieldIndex}`;
                     const foundElement = document.getElementById(fieldKey);
                     if (foundElement) {
                         scrollAreaRef.current.scrollTo({top: foundElement.offsetTop, behavior: 'smooth'});
@@ -403,9 +410,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 saveSiteEntry(siteEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
-                const fieldKey = `${fieldPath}.${fieldIndex}`;
-                delete collapsedFields[fieldKey];
-                setCollapsedFields({...collapsedFields});
+                toggleField(fieldPath, fieldIndex, {doRemove: true});
             }
         }
     };
@@ -422,14 +427,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                 Entry.EntryUpdateDate.N = Date.now().toString();
                 saveSiteEntry(siteEntry);
                 setPageContentUniqueKey(pageContentUniqueKey + 1);
-                const fieldKey = `${fieldPath}.${newFieldIndex}`;
-                const oldFieldKey = `${fieldPath}.${fieldIndex}`;
-                const collapsedNewField = collapsedFields[fieldKey];
-                collapsedFields[fieldKey] = collapsedFields[oldFieldKey];
-                collapsedFields[oldFieldKey] = collapsedNewField;
-                setCollapsedFields({...collapsedFields});
+                toggleField(fieldPath, fieldIndex, {doMove: true, newFieldIndex});
                 setTimeout(() => {
                     if (scrollAreaRef.current) {
+                        const fieldKey = `${fieldPath}.${newFieldIndex}`;
                         const foundElement = document.getElementById(fieldKey);
                         if (foundElement) {
                             scrollAreaRef.current.scrollTo({top: foundElement.offsetTop, behavior: 'smooth'});
@@ -577,8 +578,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             } else {
                 return fieldsContents.map((fieldContent, fieldContentIndex) => {
                     const fieldKey = `${fieldPath}.${fieldContentIndex}`;
+                    const collapsedIndexes = collapsedFields[fieldPath] || [];
                     return (
-                        <div key={`field_${fieldClass.key}_${fieldContentIndex}`} className="flex flex-col gap-2">
+                        <div
+                            id={fieldKey}
+                            key={`field_${fieldClass.key}_${fieldContentIndex}`}
+                            className="flex flex-col gap-2"
+                        >
                             <div
                                 className="relative flex flex-row gap-2 items-center justify-between pr-2">
                                 <FieldLabel
@@ -586,7 +592,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                     field={fieldKey}
                                     help={fieldClass.help}
                                     composite={fieldClass.type === 'composite'}
-                                    collapsed={collapsedFields[fieldKey]}
+                                    collapsed={collapsedIndexes[fieldContentIndex]}
                                     className="bg-white z-20 pr-2"
                                     controls={
                                         <IndexPositionBadge
@@ -597,7 +603,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                         />
                                     }
                                     nested={nested}
-                                    onToggle={handleToggleField(fieldKey)}
+                                    onToggle={handleToggleField(fieldPath, fieldContentIndex)}
                                 />
                                 <div className="flex flex-row gap-2 items-center hover-target">
                                     <ButtonAction
@@ -616,12 +622,13 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                 <div
                                     className="z-10 absolute h-[0px] top-[calc(100%/2)] left-[0px] right-[60px] border-b-[2px] border-dotted border-slate-300 show-element"/>
                             </div>
-                            {!collapsedFields[fieldKey] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
+                            {!collapsedIndexes[fieldContentIndex] && renderControl(fieldClass, `${fieldPath}.${fieldContentIndex}`)}
                         </div>
                     );
                 });
             }
         } else {
+            const collapsedIndexes = collapsedFields[fieldPath] || [];
             return (
                 <div key={`field_${fieldClass.key}`} className="flex flex-col gap-2">
                     <FieldLabel
@@ -630,10 +637,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                         help={fieldClass.help}
                         nested={nested}
                         composite={fieldClass.type === 'composite'}
-                        collapsed={collapsedFields[fieldPath]}
-                        onToggle={handleToggleField(fieldPath)}
+                        collapsed={collapsedIndexes[0]}
+                        onToggle={handleToggleField(fieldPath, 0)}
                     />
-                    {!collapsedFields[fieldPath] && renderControl(fieldClass, fieldPath)}
+                    {!collapsedIndexes[0] && renderControl(fieldClass, fieldPath)}
                 </div>
             );
         }
@@ -681,14 +688,14 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                         </DropdownMenuSubTrigger>
                                                         <DropdownMenuPortal>
                                                             <DropdownMenuSubContent>
-                                                                {groupItem.blocks.map((blockItem, blockItemIdx) => {
+                                                                {groupItem.blocks.map((blockItem, blockIndexInGroup) => {
                                                                     return (
                                                                         <DropdownMenuItem
-                                                                            key={blockItem.blockKey}
-                                                                            onSelect={() => handleSelectGroup(groupItem.groupKey, blockItem.blockKey)}
+                                                                            key={`block_${blockItem.blockIndex}_select`}
+                                                                            onSelect={() => handleSelectGroup(groupItem.groupKey, blockItem.blockIndex)}
                                                                         >
                                                                             <span className="text-left max-w-[300px] line-clamp-1">{blockItem.label}</span>
-                                                                            <span className="text-muted-foreground ml-2">#{blockItemIdx + 1}</span>
+                                                                            <span className="text-muted-foreground ml-2 text-xs">#{blockIndexInGroup + 1}</span>
                                                                         </DropdownMenuItem>
                                                                     );
                                                                 })}
@@ -765,35 +772,37 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                             <p className="text-sm text-muted-foreground font-medium">No
                                                                 Blocks</p>
                                                         </div>
-                                                        {/*<TooltipWrapper text="Add new block">*/}
                                                         <ContentDataBlockAddButton
                                                             blockRecords={selectedBlockClasses}
                                                             onSelect={(blockKey => handleAddNewBlock(blockKey, 0))}
                                                         />
-                                                        {/*</TooltipWrapper>*/}
                                                     </div>
                                                 )
-                                                : groupedContentData.map((contentDataBlock: ContentDataBlock, blockIndex) => {
+                                                : groupedContentData.map((contentDataBlock: ContentDataBlock, blockIndexInGroup) => {
                                                     const foundBlockClass = selectedBlockClasses[contentDataBlock.key];
                                                     const isBlockEmpty = isContentDataBlockEmpty(contentDataBlock);
                                                     if (foundBlockClass) {
-                                                        const blockId = `block_${groupedContentDataIndexOffset[blockIndex]}_${contentDataBlock.key}`;
+                                                        const blockIndex = Object.keys(groupedContentDataIndexOffset).length > 0
+                                                            ? groupedContentDataIndexOffset[blockIndexInGroup]
+                                                            : 0;
+                                                        const blockId = `block_${blockIndex}`;
+                                                        const isBlockExpanded = expandedBlocks[blockIndex];
                                                         return (
                                                             <div
                                                                 id={blockId}
                                                                 key={blockId}
-                                                                className={cn('flex flex-col gap-4', {'pb-4': expandedBlocks[blockId]})}
+                                                                className={cn('flex flex-col gap-4', {'pb-4': isBlockExpanded})}
                                                             >
                                                                 <div
                                                                     className={cn("flex flex-row gap-4 items-center justify-between px-2 py-1 rounded-[6px] border-[1px] border-transparent cursor-pointer", {
                                                                         'bg-slate-100': !isBlockEmpty,
                                                                         'bg-orange-100': isBlockEmpty
                                                                     })}
-                                                                    onClick={handleToggleBlock(blockId)}
+                                                                    onClick={handleToggleBlock(blockIndex)}
                                                                 >
                                                                     <div
                                                                         className="flex flex-row gap-2 items-center justify-center flex-grow">
-                                                                        {expandedBlocks[blockId]
+                                                                        {isBlockExpanded
                                                                             ? (<LucideChevronDown
                                                                                 className="text-muted-foreground w-4 h-4"/>)
                                                                             : (<LucideChevronRight
@@ -803,9 +812,14 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                             {foundBlockClass.label}
                                                                         </p>
                                                                         <IndexPositionBadge
-                                                                            index={blockIndex}
+                                                                            index={blockIndexInGroup}
                                                                             length={groupedContentData.length}
-                                                                            onSelect={handleMoveBlock(blockIndex)}
+                                                                            onSelect={(selectedIndexInGroup: number) => {
+                                                                                const newBlockIndex = Object.keys(groupedContentDataIndexOffset).length > 0
+                                                                                    ? groupedContentDataIndexOffset[selectedIndexInGroup]
+                                                                                    : 0;
+                                                                                handleMoveBlock(blockIndex, newBlockIndex);
+                                                                            }}
                                                                             label={foundBlockClass.label}
                                                                         />
                                                                         {isBlockEmpty && (
@@ -843,10 +857,10 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                {expandedBlocks[blockId] && (
+                                                                {isBlockExpanded && (
                                                                     <div className="pl-6 flex flex-col gap-6">
                                                                         {foundBlockClass.fields.map((fieldClass: ContentDataFieldClass) => {
-                                                                            const fieldPath = `${groupedContentDataIndexOffset[blockIndex]}.fields.${fieldClass.key}`;
+                                                                            const fieldPath = `${blockIndex}.fields.${fieldClass.key}`;
                                                                             return renderField(fieldClass, fieldPath);
                                                                         })}
                                                                     </div>
