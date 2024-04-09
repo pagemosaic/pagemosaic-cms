@@ -180,11 +180,15 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
             }
             contentDataItemIndex++;
         }
+        result = result.sort(g => g.groupKey === 'Default' ? 0 : 1)
         return result;
     }, [contentDataConfigClass, contentData]);
 
-    const pageId = getIdFromPK(pageEntry.Entry?.PK.S)
-    let selectedGroup = selectedDataGroups[pageId] || 'Default';
+    const pageId = getIdFromPK(pageEntry.Entry?.PK.S);
+    let selectedGroup = selectedDataGroups[pageId];
+    if (!selectedGroup) {
+        selectedGroup = groups.length > 0 ? groups[0].groupKey : 'Default';
+    }
     if (selectedGroup !== 'Default' && groups.findIndex(g => g.groupKey === selectedGroup) < 0) {
         selectedGroup = 'Default';
     }
@@ -215,7 +219,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
         saveSelectedDataGroups({
             ...selectedDataGroups,
             [getIdFromPK(pageEntry?.Entry?.PK.S)]: groupKey
-        })
+        });
         if (blockIndex !== undefined) {
             toggleBlock(blockIndex, {doExpand: true});
             setTimeout(() => {
@@ -687,7 +691,7 @@ export function ContentDataPanel(props: ContentDataPanelProps) {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            disabled={isInAction || groups.length <= 1}
+                                            disabled={isInAction || groups.length === 0}
                                             className="justify-start"
                                         >
                                             <LucideLayoutList className="w-4 h-4 mr-2"/>

@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useRef} from 'react';
+import React, {useState, useMemo, useRef, useEffect} from 'react';
 import get from 'lodash-es/get';
 import set from 'lodash-es/set';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -76,7 +76,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
     } = useSessionState<number>('pageContentUniqueKey');
     const {value: siteEntry, saveValue: saveSiteEntry} = useSessionState<DI_SiteEntry>(siteSessionStateKey);
     const {
-        value: selectedGroup = 'Default',
+        value: selectedGroup = '',
         saveValue: saveSelectedGroup
     } = useSessionState<string>('selectedSiteDataGroup');
     const {
@@ -176,8 +176,19 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
             }
             contentDataItemIndex++;
         }
+        result = result.sort(g => g.groupKey === 'Default' ? 0 : 1)
         return result;
     }, [contentDataConfigClass, contentData]);
+
+    useEffect(() => {
+        if (!selectedGroup) {
+            let newSelectedGroup = groups.length > 0 ? groups[0].groupKey : 'Default';
+            if (newSelectedGroup !== 'Default' && groups.findIndex(g => g.groupKey === newSelectedGroup) < 0) {
+                newSelectedGroup = 'Default';
+            }
+            saveSelectedGroup(newSelectedGroup);
+        }
+    }, []);
 
     const selectedBlockClasses: Record<string, ContentDataBlockClass> = useMemo(() => {
         let resultMap: Record<string, ContentDataBlockClass> = {};
@@ -670,7 +681,7 @@ export function SiteContentDataPanel(props: SiteContentDataPanelProps) {
                                         <Button
                                             size="sm"
                                             variant="outline"
-                                            disabled={isInAction || groups.length <= 1}
+                                            disabled={isInAction || groups.length === 0}
                                             className="justify-start"
                                         >
                                             <LucideLayoutList className="w-4 h-4 mr-2"/>
